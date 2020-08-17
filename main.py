@@ -1,3 +1,4 @@
+#%%
 """
 PART 1
 
@@ -54,7 +55,7 @@ from torch.autograd import Variable
 TEST_SIZE = 0.2
 SHUFFLE_TRAIN_TEST = False
 FEATURES = ['Open', 'High', 'Low', 'Volume']
-
+batch_size = 1
 
 def pre_process(input_df):
     print("pre_processing")
@@ -108,9 +109,10 @@ def preprocess_to_week(input_df):
             week_days_index += 1
 
     df.drop(["Date"], axis=1, inplace=True)
-
+    df = df[FEATURES + ['weekNum', 'direction']]
     num_of_weeks = max(df.weekNum)
-    res = []
+    features = []
+    targets = []
     features_len = len(FEATURES)
     for week_num in range(int(num_of_weeks)):
         week_feature_list = []
@@ -119,8 +121,8 @@ def preprocess_to_week(input_df):
         for _, day in week.iterrows():
             week_feature_list.append(day[0:features_len].to_numpy())
             week_label_list.append(day[-1])
-        res.append((torch.tensor(week_feature_list, dtype=torch.long)
-                    , torch.tensor(week_label_list, dtype=torch.long)))  # TODO require grad?
+        features.append(week_feature_list)
+        targets.append(week_label_list)  # TODO require grad?
 
     # group all days of week into one row
     # df['Open'] = df.groupby('weekNum')['Open'].apply(list)
@@ -135,20 +137,22 @@ def preprocess_to_week(input_df):
     # df = df.head(int(num_of_weeks))
 
     # print(f'num_of_weeks={num_of_weeks}')
-    return res
+    return features, targets
 
 
 def load_data():
     try:
-        df_day = pd.read_pickle('df_da1y.pkl')
-        df_week = pd.read_pickle('df_week.pkl')
+        df_day = pd.read_pickle('df_day.pkl')
+        week_features = np.load('week_features.npy')
+        week_targets = np.load('week_targets.npy')
+        # df_week = pd.read_pickle('df_week.pkl')
         print('loaded data')
     except:
         print('created data')
         df = pd.read_csv('ibm.us.txt', parse_dates=['Date'], index_col=['index'])
         df_day = pre_process(df)
-        df_week = preprocess_to_week(df_day)
-    return df_day, df_week
+        week_features, week_targets = preprocess_to_week(df_day)
+    return df_day, week_features, week_targets
 
 
 def perceptron_phase(df_day):
@@ -163,15 +167,159 @@ def perceptron_phase(df_day):
     clf.fit(X_train, y_train)
     print(clf.score(X_test, y_test))
 
+class LSTM(nn.Module):
+        def __init__(self, input_dim, hidden_dim, num_layers, output_dim):
+            super(LSTM, self).__init__()
+            # Hidden dimensions
+            self.hidden_dim = hidden_dim
+
+            # Number of hidden layers
+            self.num_layers = num_layers
+
+            # Building your LSTM
+            # batch_first=True causes input/output tensors to be of shape
+            # (batch_dim, seq_dim, hidden_dim)
+            self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True) # Bi True?
+
+            # Readout layer
+            self.fc = nn.Linear(hidden_dim, output_dim)
+
+        def forward(self, x):
+
+
+            # One time step
+            # We need to detach as we are doing truncated backpropagation through time (BPTT)
+            # If we don't, we'll backprop all the way to the start even after going through another batch
+            out, _ = self.lstm(x)
+
+            # Index hidden state of last time step
+            # out.size() --> 100, 28, 100
+            # out[:, -1, :] --> 100, 100 --> just want last time step hidden states!
+            # out = self.fc(out[:, -1, :])
+            # out.size() --> 100, 10
+            out = self.fc(out)
+            return out
 
 def main():
-    df_day, df_week = load_data()
-
-    perceptron_phase(df_day)
+    df_day, week_features, week_targets = load_data()
+    # week_features = np.array(week_features)
+    # week_targets = np.array(week_targets)
+    # np.save('week_features.npy', week_features)
+    # np.save('week_targets.npy', week_targets)
+    # perceptron_phase(df_day)
 
     ######## LSTM
+    X_train, X_test, y_train, y_test = train_test_split(week_features,
+                                                        week_targets,
+                                                        test_size=TEST_SIZE,
+                                                        random_state=42,
+                                                        shuffle=SHUFFLE_TRAIN_TEST)
+    # make training and test sets in torch
+    X_train = torch.from_numpy(X_train).type(torch.Tensor)
+    X_test = torch.from_numpy(X_test).type(torch.Tensor)
+    y_train = torch.from_numpy(y_train).type(torch.Tensor)
+    y_test = torch.from_numpy(y_test).type(torch.Tensor)
+
+    train = torch.utils.data.TensorDataset(X_train, y_train)
+    test = torch.utils.data.TensorDataset(X_test, y_test)
+
+    train_loader = torch.utils.data.DataLoader(dataset=train,
+                                               batch_size=batch_size,
+                                               shuffle=True)
+
+    test_loader = torch.utils.data.DataLoader(dataset=test,
+                                              batch_size=batch_size,
+                                              shuffle=False)
+
+    ####################
+    input_dim = 4
+    hidden_dim = 32
+    num_layers = 2
+    output_dim = 1
+    num_epochs = 100
+    # Here we define our model as a class
+
+    model = LSTM(input_dim=input_dim, hidden_dim=hidden_dim, output_dim=output_dim, num_layers=num_layers)
+
+    loss_fn = torch.nn.BCEWithLogitsLoss()
+
+    optimizer = torch.optim.Adam(model.parameters())
+    # optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    print(model)
+
+
+    """
+    # Train model
+    #####################
+    #
+    # hist = np.zeros(num_epochs)
+    #
+    # for t in range(num_epochs):
+    #     # Initialise hidden state
+    #     # Don't do this if you want your LSTM to be stateful
+    #     # model.hidden = model.init_hidden()
+    #
+    #     # Forward pass
+    #     y_train_pred = model(X_train)
+    #
+    #     loss = loss_fn(y_train_pred, y_train)
+    #
+    #     # print every 10 epochs
+    #     if t % 10 == 0 and t != 0:
+    #         print("Epoch ", t, "Loss: ", loss.item())
+    #     hist[t] = loss.item()
+    #
+    #     # Zero out gradient, else they will accumulate between epochs
+    #     optimizer.zero_grad()
+    #
+    #     # Backward pass
+    #     loss.backward()
+    #
+    #     # Update parameters
+    #     optimizer.step()
+
+    """
+
+
+    for epoch in range(num_epochs):  # loop over the dataset multiple times
+
+        running_loss = 0.0
+        for i, data in enumerate(train_loader, 0):
+            # get the inputs; data is a list of [inputs, labels]
+            inputs, labels = data
+
+            # zero the parameter gradients
+            optimizer.zero_grad()
+
+            # forward + backward + optimize
+            outputs = model(inputs)
+            loss = loss_fn(outputs.flatten(), labels.flatten())
+            loss.backward()
+            optimizer.step()
+            # print statistics
+            running_loss += loss.item()
+            if i % 50 == 49:  # print every 2000 mini-batches
+                print('[%d, %5d] loss: %.3f' %
+                      (epoch + 1, i + 1, running_loss / 50))
+                running_loss = 0.0
+
+
+    print('Finished Training')
+
+    #%%
+    y_test_pred = model(X_test)
+
+    # plt.plot(y_train_pred.detach().numpy(), label="Preds")
+    # plt.plot(y_train.detach().numpy(), label="Data")
+    # plt.legend()
+    # plt.show()
+    #
+    # plt.plot(hist, label="Training loss")
+    # plt.legend()
+    # plt.show()
     # df_week
     pass
 
+#%%
 if __name__ == '__main__':
     main()
