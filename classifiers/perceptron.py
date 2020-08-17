@@ -1,8 +1,8 @@
 from sklearn.linear_model import Perceptron
 from sklearn.model_selection import train_test_split
 
-from params import TEST_SIZE, SHUFFLE_TRAIN_TEST
-from params import FEATURES
+from utils.params import TEST_SIZE, SHUFFLE_TRAIN_TEST
+from utils.params import FEATURES
 
 
 def perceptron_phase(df_day):

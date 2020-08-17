@@ -32,9 +32,9 @@ LSTM:
 Compare results
 """
 
-from LSTM import LSTM_phase
-from perceptron import perceptron_phase
-from preprocessing import load_data
+from classifiers.LSTM import LSTM_phase
+from classifiers.perceptron import perceptron_phase
+from utils.preprocessing import load_data
 import matplotlib.pyplot as plt
 
 

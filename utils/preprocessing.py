@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from params import FEATURES
+from utils.params import FEATURES
 
 
 def pre_process(input_df):
@@ -75,19 +75,20 @@ def preprocess_to_week(input_df):
 
 def load_data():
     try:
-        df_day = pd.read_pickle('df_day.pkl')
-        week_features = np.load('week_features.npy')
-        week_targets = np.load('week_targets.npy')
-        print('loaded data')
-    except FileNotFoundError:
-        print('created data')
-        df = pd.read_csv('ibm.us.txt', parse_dates=['Date'], index_col=['index'])
+        df_day = pd.read_pickle('./data/df_day.pkl')
+        week_features = np.load('./data/week_features.npy')
+        week_targets = np.load('./data/week_targets.npy')
+        print('loading data')
+    except FileNotFoundError as e:
+        print(e)
+        print('creating data')
+        df = pd.read_csv('./data/ibm.us.txt', parse_dates=['Date'], index_col=['index'])
         df_day = pre_process(df)
 
         week_features, week_targets = preprocess_to_week(df_day)
         week_features = np.array(week_features)
         week_targets = np.array(week_targets)
-        np.save('week_features.npy', week_features)
-        np.save('week_targets.npy', week_targets)
+        np.save('./data/week_features.npy', week_features)
+        np.save('./data/week_targets.npy', week_targets)
 
     return df_day, week_features, week_targets
