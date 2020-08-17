@@ -31,6 +31,7 @@ LSTM:
 
 Compare results
 """
+from sklearn.metrics import accuracy_score
 
 import pandas as pd
 from sklearn.linear_model import Perceptron
@@ -55,7 +56,7 @@ from torch.autograd import Variable
 TEST_SIZE = 0.2
 SHUFFLE_TRAIN_TEST = False
 FEATURES = ['Open', 'High', 'Low', 'Volume']
-batch_size = 1
+batch_size = 10
 
 def pre_process(input_df):
     print("pre_processing")
@@ -178,8 +179,8 @@ class LSTM(nn.Module):
 
             # Building your LSTM
             # batch_first=True causes input/output tensors to be of shape
-            # (batch_dim, seq_dim, hidden_dim)
-            self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True) # Bi True?
+            # (batch_dim, seq_dim, hidden_dim). with out - (seq_dim, batch_dim,, hidden_dim)
+            self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers) # Bi True?
 
             # Readout layer
             self.fc = nn.Linear(hidden_dim, output_dim)
@@ -199,6 +200,33 @@ class LSTM(nn.Module):
             # out.size() --> 100, 10
             out = self.fc(out)
             return out
+
+def test(model, device, test_loader):
+    # model in eval mode skips Dropout etc
+    model.eval()
+    y_true = []
+    y_pred = []
+
+    # set the requires_grad flag to false as we are in the test mode
+    with torch.no_grad():
+        for i in test_loader:
+            # LOAD THE DATA IN A BATCH
+            data, target = i
+
+            # moving the tensors to the configured device
+            data, target = data.to(device), target.to(device)
+
+            output = model(data.float())
+
+            # PREDICTIONS
+            pred = np.round(torch.sigmoid(output))
+            target = target.float()
+            y_true.extend(target.tolist())
+            y_pred.extend(pred.reshape(-1).tolist())
+
+    print("Accuracy on test set is", accuracy_score(y_true, y_pred))
+    print("********************************************************")
+
 
 def main():
     df_day, week_features, week_targets = load_data()
@@ -234,9 +262,9 @@ def main():
     ####################
     input_dim = 4
     hidden_dim = 32
-    num_layers = 2
+    num_layers = 4
     output_dim = 1
-    num_epochs = 100
+    num_epochs = 10
     # Here we define our model as a class
 
     model = LSTM(input_dim=input_dim, hidden_dim=hidden_dim, output_dim=output_dim, num_layers=num_layers)
@@ -246,40 +274,6 @@ def main():
     optimizer = torch.optim.Adam(model.parameters())
     # optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     print(model)
-
-
-    """
-    # Train model
-    #####################
-    #
-    # hist = np.zeros(num_epochs)
-    #
-    # for t in range(num_epochs):
-    #     # Initialise hidden state
-    #     # Don't do this if you want your LSTM to be stateful
-    #     # model.hidden = model.init_hidden()
-    #
-    #     # Forward pass
-    #     y_train_pred = model(X_train)
-    #
-    #     loss = loss_fn(y_train_pred, y_train)
-    #
-    #     # print every 10 epochs
-    #     if t % 10 == 0 and t != 0:
-    #         print("Epoch ", t, "Loss: ", loss.item())
-    #     hist[t] = loss.item()
-    #
-    #     # Zero out gradient, else they will accumulate between epochs
-    #     optimizer.zero_grad()
-    #
-    #     # Backward pass
-    #     loss.backward()
-    #
-    #     # Update parameters
-    #     optimizer.step()
-
-    """
-
 
     for epoch in range(num_epochs):  # loop over the dataset multiple times
 
@@ -299,25 +293,25 @@ def main():
             # print statistics
             running_loss += loss.item()
             if i % 50 == 49:  # print every 2000 mini-batches
-                print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 50))
+                # print('[%d, %5d] loss: %.3f' %
+                #       (epoch + 1, i + 1, running_loss / 50))
                 running_loss = 0.0
+        model.eval()
+        y_train_pred = model(X_test)
+        pred = np.round(torch.sigmoid(y_train_pred.detach().squeeze()))
+        print("acc:",accuracy_score(y_test.squeeze().flatten(), pred.flatten()))
+        model.train()
+        # print(running_loss)
 
 
     print('Finished Training')
 
     #%%
-    y_test_pred = model(X_test)
 
-    # plt.plot(y_train_pred.detach().numpy(), label="Preds")
-    # plt.plot(y_train.detach().numpy(), label="Data")
-    # plt.legend()
-    # plt.show()
-    #
-    # plt.plot(hist, label="Training loss")
-    # plt.legend()
-    # plt.show()
-    # df_week
+
+    y_train_pred = model(X_train)
+    print(y_train_pred)
+
     pass
 
 #%%
