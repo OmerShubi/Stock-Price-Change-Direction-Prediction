@@ -47,7 +47,7 @@ def plots(df_day):
     axs.set_ylabel("Stock Price [USD]")
 
     plt.show()
-
+    print(df_day.groupby(by='direction').count()['Date'])
     fig, axs = plt.subplots(1, 1)
     df_day.groupby(by='direction').count()['Date'].plot.bar(rot=0, ax=axs, title='Upward / Downward Days')
     axs.set_ylabel("Number of Days")
@@ -64,10 +64,10 @@ def main():
     plots(df_day)
 
     # Perceptron
-    # perceptron_phase(df_day)
+    perceptron_phase(df_day)
 
     # LSTM
-    # LSTM_phase(week_features, week_targets)
+    LSTM_phase(week_features, week_targets)
 
 
 if __name__ == '__main__':

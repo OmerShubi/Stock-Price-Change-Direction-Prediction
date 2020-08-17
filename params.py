@@ -8,4 +8,4 @@ input_dim = 4
 hidden_dim = 32
 num_layers = 4
 output_dim = 1
-num_epochs = 10
+num_epochs = 50
