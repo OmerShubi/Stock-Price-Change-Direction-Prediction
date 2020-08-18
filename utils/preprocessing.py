@@ -73,22 +73,31 @@ def preprocess_to_week(input_df):
     return features, targets
 
 
-def load_data():
-    try:
-        df_day = pd.read_pickle('./data/df_day.pkl')
-        week_features = np.load('./data/week_features.npy')
-        week_targets = np.load('./data/week_targets.npy')
-        print('loading data')
-    except FileNotFoundError as e:
-        print(e)
+def load_data(use_preloaded=False):
+
+    if use_preloaded:
+        try:
+            df_day = pd.read_pickle('./data/df_day.pkl')
+            week_features = np.load('./data/week_features.npy')
+            week_targets = np.load('./data/week_targets.npy')
+            print('loading data')
+            return df_day, week_features, week_targets
+        except FileNotFoundError as e:
+            print(e)
+            print('creating data')
+            return create_data()
+    else:
         print('creating data')
-        df = pd.read_csv('./data/ibm.us.txt', parse_dates=['Date'], index_col=['index'])
-        df_day = pre_process(df)
+        return create_data()
 
-        week_features, week_targets = preprocess_to_week(df_day)
-        week_features = np.array(week_features)
-        week_targets = np.array(week_targets)
-        np.save('./data/week_features.npy', week_features)
-        np.save('./data/week_targets.npy', week_targets)
 
+def create_data():
+    df = pd.read_csv('./data/ibm.us.txt', parse_dates=['Date'], index_col=['index'])
+    df_day = pre_process(df)
+
+    week_features, week_targets = preprocess_to_week(df_day)
+    week_features = np.array(week_features)
+    week_targets = np.array(week_targets)
+    np.save('./data/week_features.npy', week_features)
+    np.save('./data/week_targets.npy', week_targets)
     return df_day, week_features, week_targets

@@ -4,9 +4,11 @@ import torch.nn as nn
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
-from utils.params import TEST_SIZE, SHUFFLE_TRAIN_TEST, batch_size, input_dim, hidden_dim, output_dim, num_layers, num_epochs
+from utils.params import TEST_SIZE, SHUFFLE_TRAIN_TEST, batch_size, input_dim, hidden_dim, output_dim, num_layers, \
+    num_epochs, FEATURES
 
 import matplotlib.pyplot as plt
+
 
 class LSTM(nn.Module):
     def __init__(self, input_dim, hidden_dim, num_layers, output_dim):
@@ -36,7 +38,7 @@ def LSTM_phase(week_features, week_targets):
     print(f"Test size:{TEST_SIZE},"
           f" Shuffle:{SHUFFLE_TRAIN_TEST}, batch size:{batch_size}, "
           f"input_dim:{input_dim}, hidden_dim:{hidden_dim}, output_dim:{output_dim},"
-          f" num_layers:{num_layers}, num_epochs:{num_epochs}")
+          f" num_layers:{num_layers}, num_epochs:{num_epochs}, {FEATURES}")
 
     X_train, X_test, y_train, y_test = train_test_split(week_features,
                                                         week_targets,
@@ -63,6 +65,8 @@ def LSTM_phase(week_features, week_targets):
     print(model)
 
     loss_list = []
+    train_acc_list = []
+    test_acc_list = []
     for epoch in range(num_epochs):  # loop over the dataset multiple times
         loss_inner_list = []
         for i, data in enumerate(train_loader, 0):
@@ -79,50 +83,27 @@ def LSTM_phase(week_features, week_targets):
             optimizer.step()
             loss_inner_list.append(loss.item())
         epoch_mean_loss = np.mean(loss_inner_list)
-        print(epoch_mean_loss)
         loss_list.append(epoch_mean_loss)
 
+        with torch.no_grad():
+            model.eval()
+            y_train_pred = model(X_train)
+            y_test_pred = model(X_test)
+            model.train()
 
-        model.eval()
+            y_pred_train = np.round(torch.sigmoid(y_train_pred.detach().squeeze()))
+            y_pred_test = np.round(torch.sigmoid(y_test_pred.detach().squeeze()))
 
-        y_train_pred = model(X_test)
-        pred = np.round(torch.sigmoid(y_train_pred.detach().squeeze()))
-
-        print("acc:", accuracy_score(y_test.squeeze().flatten(), pred.flatten()))
-        model.train()
+            train_acc = accuracy_score(y_train.squeeze().flatten(), y_pred_train.flatten())
+            test_acc = accuracy_score(y_test.squeeze().flatten(), y_pred_test.flatten())
+            train_acc_list.append(train_acc)
+            test_acc_list.append(test_acc)
+        print(f'{train_acc=}, {test_acc=}, {epoch_mean_loss=}')
 
     plt.plot(loss_list)
+
     plt.show()
+    plt.plot(range(num_epochs), train_acc_list, range(num_epochs), test_acc_list)
+    plt.show()
+
     print('Finished Training')
-
-
-    """
-    
-    TODO round input
-    
-    TODO FC for feature engineers, before
-    
-    TODO Check if different predictions
-    
-    TODO add acc to LSTM graph
-    
-    TODO layers in FC
-    
-    TODO check 1 week with many zeros
-    
-    TODO Normalize input (VOLUME)
-    
-    TODO smooth date (1960-1980)
-    
-    TODO CrossEntropy..? softmax + NLLLos
-    
-    CONCAT
-    
-    Continous input compared to words
-    
-    FEATURES:
-     day before
-     2 days before
-     day of week
-    """
-

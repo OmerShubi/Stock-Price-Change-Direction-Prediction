@@ -58,13 +58,13 @@ def plots(df_day):
 
 def main():
     # load data
-    df_day, week_features, week_targets = load_data()
+    df_day, week_features, week_targets = load_data(use_preloaded=True)
 
     # Plot Number of Upward / Downward days, and stock price
     plots(df_day)
 
     # Perceptron
-    perceptron_phase(df_day)
+    # perceptron_phase(df_day)
 
     # LSTM
     LSTM_phase(week_features, week_targets)

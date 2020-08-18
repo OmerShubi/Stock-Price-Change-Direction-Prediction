@@ -19,5 +19,6 @@ def perceptron_phase(df_day):
 
     clf = Perceptron(random_state=0)
     clf.fit(X_train, y_train)
+    y_pred_train = clf.predict(X_train)
     print("Perceptron Accuracy:", clf.score(X_test, y_test))
 
