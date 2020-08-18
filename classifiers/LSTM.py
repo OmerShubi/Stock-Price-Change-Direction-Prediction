@@ -98,7 +98,10 @@ def LSTM_phase(week_features, week_targets):
             test_acc = accuracy_score(y_test.squeeze().flatten(), y_pred_test.flatten())
             train_acc_list.append(train_acc)
             test_acc_list.append(test_acc)
-        print(f'{train_acc=}, {test_acc=}, {epoch_mean_loss=}')
+
+        print(f'train_acc={train_acc}, '
+              f'test_acc={test_acc}, '
+              f'epoch_mean_loss={epoch_mean_loss}')
 
     plt.plot(loss_list)
 
