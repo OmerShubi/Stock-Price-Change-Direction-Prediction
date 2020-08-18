@@ -1,7 +1,9 @@
+
+########## ALL ##########
 TEST_SIZE = 0.2
 SHUFFLE_TRAIN_TEST = False
 batch_size = 16
-FEATURES = ['Open']#, 'High', 'Low']#, 'Volume']
+FEATURES = ['Open', 'High', 'Low']#, 'Volume']
 
 ########## Perceptron CRF ##########
 STRUCT_PERCEPTRON_AVG = 200

@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 
 from utils.params import FEATURES
+import matplotlib.pyplot as plt
 
 
 def pre_process(input_df):
@@ -20,6 +21,7 @@ def pre_process(input_df):
     # check days range data
     print(f'Data from day {min(df.Date)} to day {max(df.Date)}')
     print('Num of days ', len(df))
+
     return df
 
 
@@ -77,11 +79,14 @@ def load_data(use_preloaded=False):
 
     if use_preloaded:
         try:
-            df_day = pd.read_pickle('./data/df_day.pkl')
+            day_features = np.load('./data/day_features.npy')
+            day_targets = np.load('./data/day_targets.npy')
             week_features = np.load('./data/week_features.npy')
             week_targets = np.load('./data/week_targets.npy')
+
             print('loading data')
-            return df_day, week_features, week_targets
+            return day_features, day_targets, week_features, week_targets
+
         except FileNotFoundError as e:
             print(e)
             print('creating data')
@@ -91,13 +96,35 @@ def load_data(use_preloaded=False):
         return create_data()
 
 
+def plot_time_price(df_day):
+    df = df_day.copy()
+    df = df.set_index(df_day['Date'])
+
+    fig, axs = plt.subplots(1, 1)
+    df['Open'].plot(ax=axs, title='IBM Stock Price, 1960 - 2020', linewidth=0.5)
+    df['High'].plot(ax=axs, linewidth=0.5)
+    df['Low'].plot(ax=axs, linewidth=0.5)
+    axs.set_ylabel("Stock Price [USD]")
+    plt.savefig('IBM_Stock_Price_1960_2020.png')
+    plt.show()
+
+
 def create_data():
     df = pd.read_csv('./data/ibm.us.txt', parse_dates=['Date'], index_col=['index'])
     df_day = pre_process(df)
 
+    plot_time_price(df_day)
+
     week_features, week_targets = preprocess_to_week(df_day)
+
     week_features = np.array(week_features)
     week_targets = np.array(week_targets)
     np.save('./data/week_features.npy', week_features)
     np.save('./data/week_targets.npy', week_targets)
-    return df_day, week_features, week_targets
+
+    day_features = df_day[FEATURES]
+    day_targets = df_day['direction']
+    np.save('./data/day_features.npy', day_features)
+    np.save('./data/day_targets.npy', day_targets)
+
+    return day_features, day_targets, week_features, week_targets
