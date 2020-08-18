@@ -3,6 +3,7 @@ import numpy as np
 
 from utils.params import FEATURES
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
 
 
 def pre_process(input_df):
@@ -109,12 +110,31 @@ def plot_time_price(df_day):
     plt.show()
 
 
+
+def plot_time_volume(df_day):
+    df = df_day.copy()
+    df = df.set_index(df_day['Date'])
+
+    fig, axs = plt.subplots(1, 1)
+    df['Volume'].plot(ax=axs, title='IBM Stock Volume, 1960 - 2020')
+
+    axs.set_ylabel("Stock Volume [USD]")
+    plt.savefig('IBM_Stock_Volume_1960_2020.png')
+    plt.show()
+
+
 def create_data():
     df = pd.read_csv('./data/ibm.us.txt', parse_dates=['Date'], index_col=['index'])
     df_day = pre_process(df)
 
     plot_time_price(df_day)
-
+    plot_time_volume(df_day)
+    print(df_day.describe())
+    scaler = MinMaxScaler()
+    df_day[FEATURES] = scaler.fit_transform(df_day[FEATURES])
+    plot_time_price(df_day)
+    plot_time_volume(df_day)
+    print(df_day.describe())
     week_features, week_targets = preprocess_to_week(df_day)
 
     week_features = np.array(week_features)
@@ -123,8 +143,8 @@ def create_data():
     np.save('./data/week_targets.npy', week_targets)
 
     day_features = df_day[FEATURES]
-    day_targets = df_day['direction']
+    day_target = df_day['direction']
     np.save('./data/day_features.npy', day_features)
-    np.save('./data/day_targets.npy', day_targets)
+    np.save('./data/day_target.npy', day_target)
 
-    return day_features, day_targets, week_features, week_targets
+    return day_features, day_target, week_features, week_targets

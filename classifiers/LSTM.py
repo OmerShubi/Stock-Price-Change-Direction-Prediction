@@ -99,7 +99,7 @@ def LSTM_phase(week_features, week_targets):
             train_acc_list.append(train_acc)
             test_acc_list.append(test_acc)
 
-        print(f'train_acc={train_acc}, '
+        print(f'epoch={epoch}, train_acc={train_acc}, '
               f'test_acc={test_acc}, '
               f'epoch_mean_loss={epoch_mean_loss}')
 

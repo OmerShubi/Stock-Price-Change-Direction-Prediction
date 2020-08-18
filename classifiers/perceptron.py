@@ -16,7 +16,7 @@ def perceptron_phase(X, y):
                                                         random_state=42,
                                                         shuffle=SHUFFLE_TRAIN_TEST)
 
-    clf = Perceptron(random_state=0)
+    clf = Perceptron(random_state=0, n_iter_no_change=100)
     clf.fit(X_train, y_train)
     print("Perceptron Train Accuracy:", round(clf.score(X_train, y_train),3))
     print("Perceptron Test Accuracy:", round(clf.score(X_test, y_test), 3))
