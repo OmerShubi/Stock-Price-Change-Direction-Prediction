@@ -3,7 +3,7 @@ from pystruct.learners import StructuredPerceptron
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
-from utils.params import TEST_SIZE, SHUFFLE_TRAIN_TEST, STRUCT_PERCEPTRON_AVG, STRUCT_PERCEPTRON_MAXITER
+from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST, STRUCT_PERCEPTRON_AVG, STRUCT_PERCEPTRON_MAXITER
 
 
 def PerceptronCRF(week_features, week_targets):

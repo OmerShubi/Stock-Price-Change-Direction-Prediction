@@ -4,7 +4,7 @@ import torch.nn as nn
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
-from utils.params import TEST_SIZE, SHUFFLE_TRAIN_TEST, batch_size, input_dim, hidden_dim, output_dim, num_layers, \
+from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST, batch_size, input_dim, hidden_dim, output_dim, num_layers, \
     num_epochs, FEATURES
 
 import matplotlib.pyplot as plt

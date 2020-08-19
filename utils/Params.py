@@ -25,3 +25,6 @@ hidden_dim = 120
 num_layers = 2
 output_dim = 1
 num_epochs = 200
+
+###### MRF #####
+THRESHOLD = 0

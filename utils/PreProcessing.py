@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from utils.params import FEATURES
+from utils.Params import FEATURES
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
@@ -22,7 +22,7 @@ def pre_process(input_df):
     df.drop(["Close"], axis=1, inplace=True)
     # check days range data
     print(f'Data from day {min(df.Date)} to day {max(df.Date)}')
-    print('Num of days ', len(df))
+    print('Num of days before drop', len(df))
 
     return df
 
@@ -92,10 +92,10 @@ def load_data(file_path, minimum=None ,maximum=None , use_preloaded=False):
         except FileNotFoundError as e:
             print(e)
             print('creating data')
-            return create_data(file_path=file_path, minimum=minimum, maximum=maximum)
+            return create_data(file_path=file_path, company=company, minimum=minimum, maximum=maximum)
     else:
         print('creating data')
-        return create_data(file_path=file_path, minimum=minimum, maximum=maximum)
+        return create_data(file_path=file_path, company=company, minimum=minimum, maximum=maximum)
 
 
 def plot_time_price(df_day):
@@ -111,10 +111,10 @@ def plot_time_price(df_day):
     plt.show()
 
 
-def find_dates(files):
+def find_dates(stocks):
     stocks_df = []
-    for file_path in files:
-        df = pd.read_csv(file_path, parse_dates=['Date'], index_col=['index'])
+    for stock in stocks:
+        df = pd.read_csv(f'./data/{stock}.us.txt', parse_dates=['Date'], index_col=['index'])
         stocks_df.append(df)
     for index, df in enumerate(stocks_df):
         if index == 0:
@@ -124,8 +124,9 @@ def find_dates(files):
             minimum = min(df.Date)
         if index != 0 and max(df.Date) < maximum:
             maximum = max(df.Date)
-    pass
-    # df_day = df_day[df_day['Date'].between(minimum, maximum)]
+    # stocks_df_slice = []
+    # for df in stocks_df:
+    #     stocks_df_slice.append(df[df['Date'].between(minimum, maximum)])
     return minimum, maximum
 
 
@@ -141,7 +142,7 @@ def plot_time_volume(df_day):
     plt.show()
 
 
-def create_data(file_path, minimum=None, maximum=None):
+def create_data(file_path, company, minimum=None, maximum=None):
     df = pd.read_csv(file_path, parse_dates=['Date'], index_col=['index'])
     df_day = pre_process(df)
 
@@ -153,15 +154,18 @@ def create_data(file_path, minimum=None, maximum=None):
     week_features, week_targets = preprocess_to_week(df_day)
     week_features = np.array(week_features)
     week_targets = np.array(week_targets)
-    np.save('./data/week_features.npy', week_features)
-    np.save('./data/week_targets.npy', week_targets)
+    np.save(f'./data/{company}_week_features.npy', week_features)
+    np.save(f'./data/{company}_week_targets.npy', week_targets)
 
     if minimum:
         df_day = df_day[df_day['Date'].between(minimum,maximum)]
+        df_day = df_day[~(df_day['Date'] == '2011-02-17')]
+        print('Num of days after drop', len(df_day))
+        df_day = df_day.sort_values(by='Date')
     day_features = df_day[FEATURES]
     day_target = df_day['direction']
-    np.save('./data/day_features.npy', day_features)
-    np.save('./data/day_target.npy', day_target)
+    np.save(f'./data/{company}_day_features.npy', day_features)
+    np.save(f'./data/{company}_day_targets.npy', day_target)
 
     return day_features, day_target, week_features, week_targets
 
@@ -174,3 +178,7 @@ def plots(df_day):
     axs.set_xticklabels(labels=['Down', 'Up'])
 
     plt.show()
+
+def calc_correlaction(pair):
+    # todo implement
+    return float("inf")
