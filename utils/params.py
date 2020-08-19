@@ -3,6 +3,8 @@
 TEST_SIZE = 0.2
 SHUFFLE_TRAIN_TEST = True
 batch_size = 16
+PART1 = False
+PART2 = True
 
 ## IF CHANGE FEATURES USE PRELOADE FALSE ONE TIME
 FEATURES = ['Open', 'High', 'Low', 'Volume']

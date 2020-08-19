@@ -18,6 +18,7 @@ def pre_process(input_df):
     # add direction column : 1 if Close price >= Open price else 0
     df.loc[df.Close >= df.Open, 'direction'] = 1
     df.loc[df.Close < df.Open, 'direction'] = 0
+    df['Change'] = df.Close - df.Open
     df.drop(["Close"], axis=1, inplace=True)
     # check days range data
     print(f'Data from day {min(df.Date)} to day {max(df.Date)}')
@@ -76,14 +77,14 @@ def preprocess_to_week(input_df):
     return features, targets
 
 
-def load_data(use_preloaded=False):
-
+def load_data(file_path, use_preloaded=False):
+    company = file_path.split("/")[2].split(".")[0]
     if use_preloaded:
         try:
-            day_features = np.load('./data/day_features.npy')
-            day_targets = np.load('./data/day_targets.npy')
-            week_features = np.load('./data/week_features.npy')
-            week_targets = np.load('./data/week_targets.npy')
+            day_features = np.load(f'./data/{company}_day_features.npy')
+            day_targets = np.load(f'./data/{company}_day_targets.npy')
+            week_features = np.load(f'./data/{company}_week_features.npy')
+            week_targets = np.load(f'./data/{company}_week_targets.npy')
 
             print('loading data')
             return day_features, day_targets, week_features, week_targets
@@ -91,10 +92,10 @@ def load_data(use_preloaded=False):
         except FileNotFoundError as e:
             print(e)
             print('creating data')
-            return create_data()
+            return create_data(file_path)
     else:
         print('creating data')
-        return create_data()
+        return create_data(file_path)
 
 
 def plot_time_price(df_day):
@@ -110,6 +111,20 @@ def plot_time_price(df_day):
     plt.show()
 
 
+def find_dates(files):
+    stocks_df = []
+    for file_path in files:
+        stocks_df.append(pd.read_csv(file_path, parse_dates=['Date'], index_col=['index']))
+    for index, df in enumerate(stocks_df):
+        if index == 0:
+            minimum = min(df.Date)
+            maximum = max(df.Date)
+        if index != 0 and min(df.Date) > minimum:
+            minimum = min(df.Date)
+        if index != 0 and max(df.Date) < maximum:
+            maximum = max(df.Date)
+    return minimum, maximum
+
 
 def plot_time_volume(df_day):
     df = df_day.copy()
@@ -123,24 +138,21 @@ def plot_time_volume(df_day):
     plt.show()
 
 
-def create_data():
-    df = pd.read_csv('./data/ibm.us.txt', parse_dates=['Date'], index_col=['index'])
+def create_data(file_path):
+    df = pd.read_csv(file_path, parse_dates=['Date'], index_col=['index'])
     df_day = pre_process(df)
 
     plot_time_price(df_day)
     plot_time_volume(df_day)
-    print(df_day.describe())
     scaler = MinMaxScaler()
     df_day[FEATURES] = scaler.fit_transform(df_day[FEATURES])
-    plot_time_price(df_day)
-    plot_time_volume(df_day)
-    print(df_day.describe())
-    week_features, week_targets = preprocess_to_week(df_day)
 
+    week_features, week_targets = preprocess_to_week(df_day)
     week_features = np.array(week_features)
     week_targets = np.array(week_targets)
     np.save('./data/week_features.npy', week_features)
     np.save('./data/week_targets.npy', week_targets)
+
 
     day_features = df_day[FEATURES]
     day_target = df_day['direction']
