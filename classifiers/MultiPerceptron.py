@@ -5,7 +5,7 @@ from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST
 from utils.Params import FEATURES
 
 def multi_perceptron_phase(X, y, pair):
-    print("--------- Perceptron Phase ---------")
+    print("--------- MultiPerceptron Phase ---------")
     print(f"Features:{FEATURES},"
           f"Test size:{TEST_SIZE},"
           f" Shuffle? {SHUFFLE_TRAIN_TEST}")
@@ -15,7 +15,7 @@ def multi_perceptron_phase(X, y, pair):
                                                         random_state=42,
                                                         shuffle=SHUFFLE_TRAIN_TEST)
 
-    model = MLPClassifier(random_state=0, n_iter_no_change=100)
+    model = MLPClassifier(random_state=0, n_iter_no_change=100, learning_rate ='adaptive', max_iter=5000)
     model.fit(X_train, y_train)
     predictions = model.predict_proba(X_test)
     print(f"MultiPerceptron for {pair} Train accuracy {model.score(X_train, y_train)}")

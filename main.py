@@ -73,10 +73,16 @@ def main():
         PairsDate = {}
         for pair in combinations(stocks,2):
             if calc_correlaction(pair) >= THRESHOLD:
-                df1_features = eval(f"df_features_{pair[0]}").to_numpy()
-                df1_targets = eval(f"df_targets_{pair[0]}").to_numpy()
-                df2_features = eval(f"df_features_{pair[1]}").to_numpy()
-                df2_targets = eval(f"df_targets_{pair[1]}").to_numpy()
+                if USE_PRELOADED:
+                    df1_features = eval(f"df_features_{pair[0]}")
+                    df1_targets = eval(f"df_targets_{pair[0]}")
+                    df2_features = eval(f"df_features_{pair[1]}")
+                    df2_targets = eval(f"df_targets_{pair[1]}")
+                else:
+                    df1_features = eval(f"df_features_{pair[0]}").to_numpy()
+                    df1_targets = eval(f"df_targets_{pair[0]}").to_numpy()
+                    df2_features = eval(f"df_features_{pair[1]}").to_numpy()
+                    df2_targets = eval(f"df_targets_{pair[1]}").to_numpy()
                 df_features = np.concatenate((df1_features, df2_features), axis=1)
                 # 0:(0,0) 1:(0,1) 2: (1,0) 3 : (1,1)
                 df_targets = 2*df1_targets + df2_targets

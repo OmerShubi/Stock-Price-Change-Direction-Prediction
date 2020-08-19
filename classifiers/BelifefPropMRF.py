@@ -21,6 +21,7 @@ def infer(nodes_features, Y):
     X = (nodes_features.reshape((-1, n_features)), edges, edge_features)
     # w.shape = n_states*n_features + n_states*n_states*n_edge_features
     w = np.hstack([np.ones((n_states * n_features)).ravel(), np.eye((n_edge_features)).ravel()])
+    # batch_inference
     Y_pred = crf.inference(X, w)
 
     accuracy = calc_accuracy(Y_pred, Y)

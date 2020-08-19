@@ -8,7 +8,7 @@ PART2 = True
 
 ## IF CHANGE FEATURES USE PRELOADE FALSE ONE TIME
 FEATURES = ['Open', 'High', 'Low', 'Volume']
-USE_PRELOADED = False
+USE_PRELOADED = True
 
 ########## Perceptron #########
 PERCEPTRON_TRAIN = True
