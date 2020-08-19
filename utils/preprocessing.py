@@ -77,7 +77,7 @@ def preprocess_to_week(input_df):
     return features, targets
 
 
-def load_data(file_path, use_preloaded=False):
+def load_data(file_path, minimum=None ,maximum=None , use_preloaded=False):
     company = file_path.split("/")[2].split(".")[0]
     if use_preloaded:
         try:
@@ -92,10 +92,10 @@ def load_data(file_path, use_preloaded=False):
         except FileNotFoundError as e:
             print(e)
             print('creating data')
-            return create_data(file_path)
+            return create_data(file_path=file_path, minimum=minimum, maximum=maximum)
     else:
         print('creating data')
-        return create_data(file_path)
+        return create_data(file_path=file_path, minimum=minimum, maximum=maximum)
 
 
 def plot_time_price(df_day):
@@ -114,7 +114,8 @@ def plot_time_price(df_day):
 def find_dates(files):
     stocks_df = []
     for file_path in files:
-        stocks_df.append(pd.read_csv(file_path, parse_dates=['Date'], index_col=['index']))
+        df = pd.read_csv(file_path, parse_dates=['Date'], index_col=['index'])
+        stocks_df.append(df)
     for index, df in enumerate(stocks_df):
         if index == 0:
             minimum = min(df.Date)
@@ -123,6 +124,8 @@ def find_dates(files):
             minimum = min(df.Date)
         if index != 0 and max(df.Date) < maximum:
             maximum = max(df.Date)
+    pass
+    # df_day = df_day[df_day['Date'].between(minimum, maximum)]
     return minimum, maximum
 
 
@@ -138,7 +141,7 @@ def plot_time_volume(df_day):
     plt.show()
 
 
-def create_data(file_path):
+def create_data(file_path, minimum=None, maximum=None):
     df = pd.read_csv(file_path, parse_dates=['Date'], index_col=['index'])
     df_day = pre_process(df)
 
@@ -153,10 +156,21 @@ def create_data(file_path):
     np.save('./data/week_features.npy', week_features)
     np.save('./data/week_targets.npy', week_targets)
 
-
+    if minimum:
+        df_day = df_day[df_day['Date'].between(minimum,maximum)]
     day_features = df_day[FEATURES]
     day_target = df_day['direction']
     np.save('./data/day_features.npy', day_features)
     np.save('./data/day_target.npy', day_target)
 
     return day_features, day_target, week_features, week_targets
+
+
+def plots(df_day):
+    print(df_day.groupby(by='direction').count()['Date'])
+    fig, axs = plt.subplots(1, 1)
+    df_day.groupby(by='direction').count()['Date'].plot.bar(rot=0, ax=axs, title='Upward / Downward Days')
+    axs.set_ylabel("Number of Days")
+    axs.set_xticklabels(labels=['Down', 'Up'])
+
+    plt.show()
