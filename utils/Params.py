@@ -26,7 +26,7 @@ output_dim = 1
 num_epochs = 200
 
 ######## MLP #######
-MLP_MAXITER = 2
+MLP_MAXITER = 2000
 
 ###### MRF #####
-THRESHOLD = 0
+THRESHOLD = 0.5

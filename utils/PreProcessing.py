@@ -73,7 +73,7 @@ def preprocess_to_week(input_df):
             week_label_list.append(day[-1])
         features.append(week_feature_list)
         targets.append(week_label_list)  # TODO require grad?
-    return features, targets
+    return np.array(features), np.array(targets)
 
 def load_data(file_path, minimum=None ,maximum=None , use_preloaded=False):
     company = file_path.split("/")[2].split(".")[0]
@@ -100,26 +100,28 @@ def create_data(file_path, company, minimum=None, maximum=None):
     df = pd.read_csv(file_path, parse_dates=['Date'], index_col=['index'])
     df_day = preprocess_to_day(df)
 
-    plot_time_price(df_day)
-    plot_time_volume(df_day)
+    # plot_time_price(df_day)
+    # plot_time_volume(df_day)
+
     scaler = MinMaxScaler()
     df_day[FEATURES] = scaler.fit_transform(df_day[FEATURES])
 
     week_features, week_targets = preprocess_to_week(df_day)
-    week_features = np.array(week_features)
-    week_targets = np.array(week_targets)
     np.save(f'./data/{company}_week_features.npy', week_features)
     np.save(f'./data/{company}_week_targets.npy', week_targets)
 
     if minimum:
-        df_day = df_day[df_day['Date'].between(minimum,maximum)]
+        df_day = df_day[df_day['Date'].between(minimum, maximum)]
         df_day = df_day[~(df_day['Date'] == '2011-02-17')]
+        # df_day = df_day[~(df_day['Date'] == '1998-10-29')]
         print('Num of days after drop', len(df_day))
         df_day = df_day.sort_values(by='Date')
-    df_change = df_day['Change']
+
+    df_change = df_day['Change'].to_numpy()
     np.save(f'./data/{company}_day_change.npy', df_change)
-    day_features = df_day[FEATURES]
-    day_target = df_day['direction']
+
+    day_features = df_day[FEATURES].to_numpy()
+    day_target = df_day['direction'].to_numpy()
     np.save(f'./data/{company}_day_features.npy', day_features)
     np.save(f'./data/{company}_day_targets.npy', day_target)
 
