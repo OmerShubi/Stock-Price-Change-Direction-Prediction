@@ -2,11 +2,11 @@ import pandas as pd
 import numpy as np
 
 from utils.Params import FEATURES
-import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
+from utils.Utils import plot_time_price, plot_time_volume, plot_direction_count
 
 
-def pre_process(input_df):
+def preprocess_to_day(input_df):
     print("pre_processing")
     df = input_df.copy()
     # check OpenInt values
@@ -25,7 +25,6 @@ def pre_process(input_df):
     print('Num of days before drop', len(df))
 
     return df
-
 
 def preprocess_to_week(input_df):
     df = input_df.copy()
@@ -76,7 +75,6 @@ def preprocess_to_week(input_df):
         targets.append(week_label_list)  # TODO require grad?
     return features, targets
 
-
 def load_data(file_path, minimum=None ,maximum=None , use_preloaded=False):
     company = file_path.split("/")[2].split(".")[0]
     if use_preloaded:
@@ -86,65 +84,20 @@ def load_data(file_path, minimum=None ,maximum=None , use_preloaded=False):
             week_features = np.load(f'./data/{company}_week_features.npy')
             week_targets = np.load(f'./data/{company}_week_targets.npy')
 
-            print('loading data')
+            print(f'loading {company} data')
             return day_features, day_targets, week_features, week_targets
 
         except FileNotFoundError as e:
             print(e)
-            print('creating data')
+            print(f'creating {company} data')
             return create_data(file_path=file_path, company=company, minimum=minimum, maximum=maximum)
     else:
-        print('creating data')
+        print(f'creating {company} data')
         return create_data(file_path=file_path, company=company, minimum=minimum, maximum=maximum)
-
-
-def plot_time_price(df_day):
-    df = df_day.copy()
-    df = df.set_index(df_day['Date'])
-
-    fig, axs = plt.subplots(1, 1)
-    df['Open'].plot(ax=axs, title='IBM Stock Price, 1960 - 2020', linewidth=0.5)
-    df['High'].plot(ax=axs, linewidth=0.5)
-    df['Low'].plot(ax=axs, linewidth=0.5)
-    axs.set_ylabel("Stock Price [USD]")
-    plt.savefig('IBM_Stock_Price_1960_2020.png')
-    plt.show()
-
-
-def find_dates(stocks):
-    stocks_df = []
-    for stock in stocks:
-        df = pd.read_csv(f'./data/{stock}.us.txt', parse_dates=['Date'], index_col=['index'])
-        stocks_df.append(df)
-    for index, df in enumerate(stocks_df):
-        if index == 0:
-            minimum = min(df.Date)
-            maximum = max(df.Date)
-        if index != 0 and min(df.Date) > minimum:
-            minimum = min(df.Date)
-        if index != 0 and max(df.Date) < maximum:
-            maximum = max(df.Date)
-    # stocks_df_slice = []
-    # for df in stocks_df:
-    #     stocks_df_slice.append(df[df['Date'].between(minimum, maximum)])
-    return minimum, maximum
-
-
-def plot_time_volume(df_day):
-    df = df_day.copy()
-    df = df.set_index(df_day['Date'])
-
-    fig, axs = plt.subplots(1, 1)
-    df['Volume'].plot(ax=axs, title='IBM Stock Volume, 1960 - 2020')
-
-    axs.set_ylabel("Stock Volume [USD]")
-    plt.savefig('IBM_Stock_Volume_1960_2020.png')
-    plt.show()
-
 
 def create_data(file_path, company, minimum=None, maximum=None):
     df = pd.read_csv(file_path, parse_dates=['Date'], index_col=['index'])
-    df_day = pre_process(df)
+    df_day = preprocess_to_day(df)
 
     plot_time_price(df_day)
     plot_time_volume(df_day)
@@ -169,16 +122,3 @@ def create_data(file_path, company, minimum=None, maximum=None):
 
     return day_features, day_target, week_features, week_targets
 
-
-def plots(df_day):
-    print(df_day.groupby(by='direction').count()['Date'])
-    fig, axs = plt.subplots(1, 1)
-    df_day.groupby(by='direction').count()['Date'].plot.bar(rot=0, ax=axs, title='Upward / Downward Days')
-    axs.set_ylabel("Number of Days")
-    axs.set_xticklabels(labels=['Down', 'Up'])
-
-    plt.show()
-
-def calc_correlaction(pair):
-    # todo implement
-    return float("inf")

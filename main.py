@@ -4,8 +4,10 @@ from classifiers.Perceptron import perceptron_phase
 from classifiers.MultiPerceptron import multi_perceptron_phase
 from utils.Params import USE_PRELOADED, PERCEPTRON_TRAIN, STRUCT_PERCEPTRON_TRAIN,\
     LSTM_TRAIN, PART1, PART2, THRESHOLD
-from utils.PreProcessing import load_data, find_dates, calc_correlaction
+from utils.PreProcessing import load_data
+from utils.Utils import  calc_correlaction, find_dates
 from itertools import combinations
+import numpy as np
 
 
 def main():
@@ -17,7 +19,7 @@ def main():
                                                                            use_preloaded=USE_PRELOADED)
 
         # Plot Number of Upward / Downward days,
-        # plots(df_day)
+        # plot_direction_count(df_day)
 
         # Perceptron
         if PERCEPTRON_TRAIN:
@@ -69,7 +71,6 @@ def main():
                                                           use_preloaded=USE_PRELOADED,
                                                           minimum=minimum,
                                                           maximum=maximum)
-        import numpy as np
         PairsDate = {}
         for pair in combinations(stocks,2):
             if calc_correlaction(pair) >= THRESHOLD:

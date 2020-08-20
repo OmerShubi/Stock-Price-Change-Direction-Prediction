@@ -5,7 +5,7 @@ from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST
 from utils.Params import FEATURES
 
 def multi_perceptron_phase(X, y, pair):
-    print("--------- MultiPerceptron Phase ---------")
+    print(f"--------- MultiPerceptron Phase for {pair}---------")
     print(f"Features:{FEATURES},"
           f"Test size:{TEST_SIZE},"
           f" Shuffle? {SHUFFLE_TRAIN_TEST}")
