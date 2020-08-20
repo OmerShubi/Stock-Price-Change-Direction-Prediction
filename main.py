@@ -8,6 +8,10 @@ from utils.PreProcessing import load_data
 from utils.Utils import  calc_correlaction, find_dates
 from itertools import combinations
 import numpy as np
+from sklearn.model_selection import train_test_split
+from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST
+from classifiers.BeliefPropMRF import batch_infer
+
 
 
 def main():
@@ -43,7 +47,7 @@ def main():
 
 
         # PART 2
-        stocks = ['ibm', 'crm', 'sap', 'orcl', 'msft', 'acn']
+        stocks = ['ibm', 'crm', 'sap']#, 'orcl', 'msft', 'acn']
         minimum, maximum = find_dates(stocks)
 
         # create/load data
@@ -71,7 +75,10 @@ def main():
                                                           use_preloaded=USE_PRELOADED,
                                                           minimum=minimum,
                                                           maximum=maximum)
-        PairsDate = {}
+        PairsDataTrain = {}
+        PairsDataTest = {}
+        StockDataTrain = {}
+        StockDataTest = {}
         for pair in combinations(stocks,2):
             if calc_correlaction(pair) >= THRESHOLD:
                 if USE_PRELOADED:
@@ -84,11 +91,43 @@ def main():
                     df1_targets = eval(f"df_targets_{pair[0]}").to_numpy()
                     df2_features = eval(f"df_features_{pair[1]}").to_numpy()
                     df2_targets = eval(f"df_targets_{pair[1]}").to_numpy()
-                df_features = np.concatenate((df1_features, df2_features), axis=1)
+
+                df1_features_train, df1_features_test, df1_targets_train,\
+                df1_targets_test = train_test_split(df1_features,
+                                                    df1_targets,
+                                                    test_size=TEST_SIZE,
+                                                    random_state=42,
+                                                    shuffle=SHUFFLE_TRAIN_TEST)
+
+                df2_features_train, df2_features_test, df2_targets_train, \
+                df2_targets_test = train_test_split(df2_features,
+                                                    df2_targets,
+                                                    test_size=TEST_SIZE,
+                                                    random_state=42,
+                                                    shuffle=SHUFFLE_TRAIN_TEST)
+
+                # StockData[stock] = X_train, y_train, X_test, y_test
+                StockDataTrain[pair[0]] = (df1_features_train, df1_targets_train)
+                StockDataTest[pair[0]] = (df1_features_test, df1_targets_test)
+                StockDataTrain[pair[1]] = (df2_features_train, df2_targets_train)
+                StockDataTest[pair[1]] = (df2_features_test, df2_targets_test)
+
+
+                X_train = np.concatenate((df1_features_train, df2_features_train), axis=1)
+                num_days_train = X_train.shape[0]
+                X_test = np.concatenate((df1_features_test, df2_features_test), axis=1)
+                num_days_test = X_test.shape[0]
+
                 # 0:(0,0) 1:(0,1) 2: (1,0) 3 : (1,1)
-                df_targets = 2*df1_targets + df2_targets
-                # (X_test, y_test, predictions)
-                PairsDate[pair] = multi_perceptron_phase(df_features, df_targets, pair)
+                y_train = 2 * df1_targets_train + df2_targets_train
+                y_test = 2 * df1_targets_test + df2_targets_test
+
+                # PairsData[pair] = predictions_train, predictions_test
+                PairsDataTrain[pair], PairsDataTest[pair] = multi_perceptron_phase(X_train, X_test, y_train, y_test, pair)
+
+        batch_infer(PairsDataTrain, StockDataTrain, num_days_train, 'train')
+        batch_infer(PairsDataTest, StockDataTest, num_days_test, 'test')
+
 
     else:
         print("No Part to Run ..")
