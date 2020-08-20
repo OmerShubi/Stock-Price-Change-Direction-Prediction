@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
+import logging.config
 
 from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST, batch_size, input_dim, hidden_dim, output_dim, num_layers, \
     num_epochs, FEATURES
@@ -34,11 +35,11 @@ class LSTM(nn.Module):
 
 
 def LSTM_phase(week_features, week_targets):
-    print("---------- LSTM Phase -----------")
-    print(f"Test size:{TEST_SIZE},"
-          f" Shuffle:{SHUFFLE_TRAIN_TEST}, batch size:{batch_size}, "
-          f"input_dim:{input_dim}, hidden_dim:{hidden_dim}, output_dim:{output_dim},"
-          f" num_layers:{num_layers}, num_epochs:{num_epochs}, {FEATURES}")
+    logger = logging.getLogger(__name__)
+    logger.info("---------- LSTM Phase -----------")
+    logger.info(f"batch size:{batch_size}, "
+                f"input_dim:{input_dim}, hidden_dim:{hidden_dim}, output_dim:{output_dim},"
+                f" num_layers:{num_layers}, num_epochs:{num_epochs}")
 
     X_train, X_test, y_train, y_test = train_test_split(week_features,
                                                         week_targets,
@@ -61,8 +62,6 @@ def LSTM_phase(week_features, week_targets):
     loss_fn = torch.nn.BCEWithLogitsLoss()
 
     optimizer = torch.optim.Adam(model.parameters())
-
-    print(model)
 
     loss_list = []
     train_acc_list = []
@@ -99,14 +98,13 @@ def LSTM_phase(week_features, week_targets):
             train_acc_list.append(train_acc)
             test_acc_list.append(test_acc)
 
-        print(f'epoch={epoch}, train_acc={train_acc}, '
-              f'test_acc={test_acc}, '
-              f'epoch_mean_loss={epoch_mean_loss}')
+        if epoch % 10 or epoch == num_epochs - 1:
+            logger.info(f'epoch={epoch}, train_acc={round(train_acc, 3)}, '
+                        f'test_acc={round(test_acc, 3)}, '
+                        f'epoch_mean_loss={round(epoch_mean_loss, 3)}')
 
-    plt.plot(loss_list)
-
-    plt.show()
-    plt.plot(range(num_epochs), train_acc_list, range(num_epochs), test_acc_list)
-    plt.show()
-
-    print('Finished Training')
+    # plt.plot(loss_list)
+    # plt.show()
+    #
+    # plt.plot(range(num_epochs), train_acc_list, range(num_epochs), test_acc_list)
+    # plt.show()

@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import pearsonr
+import logging.config
 
 
 def plot_time_price(df_day):
@@ -15,6 +16,7 @@ def plot_time_price(df_day):
     plt.savefig('IBM_Stock_Price_1960_2020.png')
     plt.show()
 
+
 def plot_time_volume(df_day):
     df = df_day.copy()
     df = df.set_index(df_day['Date'])
@@ -26,8 +28,11 @@ def plot_time_volume(df_day):
     plt.savefig('IBM_Stock_Volume_1960_2020.png')
     plt.show()
 
+
 def plot_direction_count(df_day):
-    print(df_day.groupby(by='direction').count()['Date'])
+    logger = logging.getLogger(__name__)
+
+    logger.info(df_day.groupby(by='direction').count()['Date'])
     fig, axs = plt.subplots(1, 1)
     df_day.groupby(by='direction').count()['Date'].plot.bar(rot=0, ax=axs, title='Upward / Downward Days')
     axs.set_ylabel("Number of Days")
@@ -35,9 +40,10 @@ def plot_direction_count(df_day):
 
     plt.show()
 
-def calc_correlaction(df1_change, df2_change, pair):
+
+def calc_correlation(df1_change, df2_change):
+
     pearson = pearsonr(df1_change, df2_change)[0]
-    print(f'pearson for {pair} : {pearson}')
     return pearson
 
 

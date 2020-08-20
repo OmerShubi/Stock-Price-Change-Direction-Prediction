@@ -1,12 +1,11 @@
 ########## ALL ##########
 TEST_SIZE = 0.2
-SHUFFLE_TRAIN_TEST = True
-batch_size = 16
 PART1 = False
 PART2 = True
 
 ## IF CHANGE FEATURES USE PRELOADE FALSE ONE TIME
 FEATURES = ['Open', 'High', 'Low', 'Volume']
+SHUFFLE_TRAIN_TEST = True
 USE_PRELOADED = True
 
 ########## Perceptron #########
@@ -19,14 +18,15 @@ STRUCT_PERCEPTRON_MAXITER = 200
 
 ########## LSTM ##########
 LSTM_TRAIN = True
-input_dim = len(FEATURES)
 hidden_dim = 120
 num_layers = 2
-output_dim = 1
-num_epochs = 200
+num_epochs = 2
+batch_size = 16
+input_dim = len(FEATURES)  # do not change
+output_dim = 1  # do not change
 
 ######## MLP #######
-MLP_MAXITER = 2000
+MLP_MAXITER = 2
 
 ###### MRF #####
 THRESHOLD = 0.5

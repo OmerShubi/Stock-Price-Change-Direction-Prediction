@@ -4,13 +4,15 @@ import numpy as np
 from utils.Params import FEATURES
 from sklearn.preprocessing import MinMaxScaler
 from utils.Utils import plot_time_price, plot_time_volume, plot_direction_count
+import logging.config
 
 
-def preprocess_to_day(input_df):
-    print("pre_processing")
+def preprocess_to_day(input_df, minimum):
+    logger = logging.getLogger(__name__)
+
     df = input_df.copy()
     # check OpenInt values
-    # if df[df.OpenInt > 0].empty: print("all OpenInt values are zero")
+    # if df[df.OpenInt > 0].empty: logger.info("all OpenInt values are zero")
     # remove OpenInt column
     df.drop("OpenInt", axis=1, inplace=True)
     # remove High, low columns
@@ -21,10 +23,12 @@ def preprocess_to_day(input_df):
     df['Change'] = df.Close - df.Open
     df.drop(["Close"], axis=1, inplace=True)
     # check days range data
-    print(f'Data from day {min(df.Date)} to day {max(df.Date)}')
-    print('Num of days before drop', len(df))
+    if not minimum:
+        logger.info(f'Date range: {min(df.Date)}-{max(df.Date)}')
+        logger.info(f'Num of days:{len(df)}')
 
     return df
+
 
 def preprocess_to_week(input_df):
     df = input_df.copy()
@@ -75,30 +79,36 @@ def preprocess_to_week(input_df):
         targets.append(week_label_list)  # TODO require grad?
     return np.array(features), np.array(targets)
 
-def load_data(file_path, minimum=None ,maximum=None , use_preloaded=False):
+
+def load_data(file_path, minimum="", maximum="", use_preloaded=False):
+    logger = logging.getLogger(__name__)
+
     company = file_path.split("/")[2].split(".")[0]
     if use_preloaded:
         try:
-            day_features = np.load(f'./data/{company}_day_features.npy')
-            day_targets = np.load(f'./data/{company}_day_targets.npy')
-            week_features = np.load(f'./data/{company}_week_features.npy')
-            week_targets = np.load(f'./data/{company}_week_targets.npy')
-            df_change = np.load(f'./data/{company}_day_change.npy')
+            day_features = np.load(f'./data/{company}_day_features_{minimum}_{maximum}.npy')
+            day_targets = np.load(f'./data/{company}_day_targets_{minimum}_{maximum}.npy')
+            week_features = np.load(f'./data/{company}_week_features_{minimum}_{maximum}.npy')
+            week_targets = np.load(f'./data/{company}_week_targets_{minimum}_{maximum}.npy')
+            df_change = np.load(f'./data/{company}_day_change_{minimum}_{maximum}.npy')
 
-            print(f'loading {company} data')
+            logger.info(f'loading {company} data')
             return day_features, day_targets, week_features, week_targets, df_change
 
         except FileNotFoundError as e:
-            print(e)
-            print(f'creating {company} data')
+            logger.info(e)
+            logger.info(f'creating {company} data')
             return create_data(file_path=file_path, company=company, minimum=minimum, maximum=maximum)
     else:
-        print(f'creating {company} data')
+        logger.info(f'creating {company} data')
         return create_data(file_path=file_path, company=company, minimum=minimum, maximum=maximum)
 
+
 def create_data(file_path, company, minimum=None, maximum=None):
+    logger = logging.getLogger(__name__)
+
     df = pd.read_csv(file_path, parse_dates=['Date'], index_col=['index'])
-    df_day = preprocess_to_day(df)
+    df_day = preprocess_to_day(df, minimum)
 
     # plot_time_price(df_day)
     # plot_time_volume(df_day)
@@ -107,23 +117,22 @@ def create_data(file_path, company, minimum=None, maximum=None):
     df_day[FEATURES] = scaler.fit_transform(df_day[FEATURES])
 
     week_features, week_targets = preprocess_to_week(df_day)
-    np.save(f'./data/{company}_week_features.npy', week_features)
-    np.save(f'./data/{company}_week_targets.npy', week_targets)
+    np.save(f'./data/{company}_week_features_{minimum}_{maximum}.npy', week_features)
+    np.save(f'./data/{company}_week_targets_{minimum}_{maximum}.npy', week_targets)
 
     if minimum:
         df_day = df_day[df_day['Date'].between(minimum, maximum)]
         df_day = df_day[~(df_day['Date'] == '2011-02-17')]
         # df_day = df_day[~(df_day['Date'] == '1998-10-29')]
-        print('Num of days after drop', len(df_day))
+        logger.info(f'Num of days after drop {len(df_day)}')
         df_day = df_day.sort_values(by='Date')
 
     df_change = df_day['Change'].to_numpy()
-    np.save(f'./data/{company}_day_change.npy', df_change)
+    np.save(f'./data/{company}_day_change_{minimum}_{maximum}.npy', df_change)
 
     day_features = df_day[FEATURES].to_numpy()
     day_target = df_day['direction'].to_numpy()
-    np.save(f'./data/{company}_day_features.npy', day_features)
-    np.save(f'./data/{company}_day_targets.npy', day_target)
+    np.save(f'./data/{company}_day_features_{minimum}_{maximum}.npy', day_features)
+    np.save(f'./data/{company}_day_targets_{minimum}_{maximum}.npy', day_target)
 
     return day_features, day_target, week_features, week_targets, df_change
-

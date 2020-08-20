@@ -1,9 +1,12 @@
 import numpy as np
 from pystruct.models import EdgeFeatureGraphCRF
 from utils.Params import FEATURES
+import logging.config
 
 def batch_infer(PairsData, StockData, num_days, set_name):
-    print(f"--------- BP for {set_name} Phase ---------")
+    logger = logging.getLogger(__name__)
+
+    logger.info(f"--------- BP for {set_name} Phase ---------")
     stock_to_inx = {stock: inx for inx, stock in enumerate(StockData)}
     num_stocks = len(StockData)
     num_features = len(FEATURES)
@@ -39,7 +42,7 @@ def batch_infer(PairsData, StockData, num_days, set_name):
     prediction_array = np.array(prediction_list)
     for stock, inx in stock_to_inx.items():
         accuracy = (Y_batch[:,inx]==prediction_array[:,inx]).sum() / num_days
-        print(f"BeliefProp accuracy {set_name} for {stock} : {accuracy}")
+        logger.info(f"BeliefProp accuracy {set_name} for {stock} : {round(accuracy,3)}")
 
 
 def infer(nodes_features, edges, edge_features):
