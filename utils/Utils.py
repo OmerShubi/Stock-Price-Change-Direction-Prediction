@@ -60,7 +60,13 @@ def find_dates(stocks):
             minimum = min(df.Date)
         if index != 0 and max(df.Date) < maximum:
             maximum = max(df.Date)
-    # stocks_df_slice = []
-    # for df in stocks_df:
-    #     stocks_df_slice.append(df[df['Date'].between(minimum, maximum)])
+
     return minimum, maximum
+
+
+
+
+# stock1 =stocks[0][0]
+# stock2 =stocks[2][0]
+# common = stock1.merge(stock2, on=["Date"])
+# result = stock1[~stock1.Date.isin(common.Date)]

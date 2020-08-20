@@ -55,7 +55,6 @@ def main():
         # graph for test
         # BP
 
-        # PART 2
         logger.info('--------- Part 2 Start ---------')
         stock_names = ['ibm', 'orcl', 'sap', 'csco', 'intc']
         logger.info(f'stocks: {stock_names}, Threshold:{THRESHOLD}')
@@ -141,9 +140,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-# stock1 =stocks[0][0]
-# stock2 =stocks[2][0]
-# common = stock1.merge(stock2, on=["Date"])
-# result = stock1[~stock1.Date.isin(common.Date)]
