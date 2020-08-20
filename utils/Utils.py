@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy.stats import pearsonr
 
 
 def plot_time_price(df_day):
@@ -13,7 +14,6 @@ def plot_time_price(df_day):
     axs.set_ylabel("Stock Price [USD]")
     plt.savefig('IBM_Stock_Price_1960_2020.png')
     plt.show()
-
 
 def plot_time_volume(df_day):
     df = df_day.copy()
@@ -35,10 +35,10 @@ def plot_direction_count(df_day):
 
     plt.show()
 
-def calc_correlaction(pair):
-    # todo implement
-    # todo need change column
-    return float("inf")
+def calc_correlaction(df1_change, df2_change, pair):
+    pearson = pearsonr(df1_change, df2_change)[0]
+    print(f'pearson for {pair} : {pearson}')
+    return pearson
 
 
 def find_dates(stocks):

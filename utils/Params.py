@@ -1,4 +1,3 @@
-
 ########## ALL ##########
 TEST_SIZE = 0.2
 SHUFFLE_TRAIN_TEST = True
@@ -27,7 +26,7 @@ output_dim = 1
 num_epochs = 200
 
 ######## MLP #######
-MLP_MAXITER = 2000
+MLP_MAXITER = 2
 
 ###### MRF #####
 THRESHOLD = 0

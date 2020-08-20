@@ -83,9 +83,10 @@ def load_data(file_path, minimum=None ,maximum=None , use_preloaded=False):
             day_targets = np.load(f'./data/{company}_day_targets.npy')
             week_features = np.load(f'./data/{company}_week_features.npy')
             week_targets = np.load(f'./data/{company}_week_targets.npy')
+            df_change = np.load(f'./data/{company}_day_change.npy')
 
             print(f'loading {company} data')
-            return day_features, day_targets, week_features, week_targets
+            return day_features, day_targets, week_features, week_targets, df_change
 
         except FileNotFoundError as e:
             print(e)
@@ -115,10 +116,12 @@ def create_data(file_path, company, minimum=None, maximum=None):
         df_day = df_day[~(df_day['Date'] == '2011-02-17')]
         print('Num of days after drop', len(df_day))
         df_day = df_day.sort_values(by='Date')
+    df_change = df_day['Change']
+    np.save(f'./data/{company}_day_change.npy', df_change)
     day_features = df_day[FEATURES]
     day_target = df_day['direction']
     np.save(f'./data/{company}_day_features.npy', day_features)
     np.save(f'./data/{company}_day_targets.npy', day_target)
 
-    return day_features, day_target, week_features, week_targets
+    return day_features, day_target, week_features, week_targets, df_change
 

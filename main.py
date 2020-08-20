@@ -19,7 +19,7 @@ def main():
         # PART 1
 
         # create/load data
-        day_features, day_targets, week_features, week_targets = load_data(file_path='./data/ibm.us.txt',
+        day_features, day_targets, week_features, week_targets, df_change = load_data(file_path='./data/ibm.us.txt',
                                                                            use_preloaded=USE_PRELOADED)
 
         # Plot Number of Upward / Downward days,
@@ -47,31 +47,31 @@ def main():
 
 
         # PART 2
-        stocks = ['ibm', 'crm', 'sap']#, 'orcl', 'msft', 'acn']
+        stocks = ['ibm', 'crm', 'sap', 'orcl', 'msft', 'acn']
         minimum, maximum = find_dates(stocks)
 
         # create/load data
-        df_features_ibm, df_targets_ibm, _, _ = load_data(file_path='./data/ibm.us.txt',
+        df_features_ibm, df_targets_ibm, _, _, df_change_ibm = load_data(file_path='./data/ibm.us.txt',
                                                           use_preloaded=USE_PRELOADED,
                                                           minimum=minimum,
                                                           maximum=maximum)
-        df_features_crm, df_targets_crm, _, _ = load_data(file_path='./data/crm.us.txt',
+        df_features_crm, df_targets_crm, _, _, df_change_crm = load_data(file_path='./data/crm.us.txt',
                                                           use_preloaded=USE_PRELOADED,
                                                           minimum=minimum,
                                                           maximum=maximum)
-        df_features_sap, df_targets_sap, _, _ = load_data(file_path='./data/sap.us.txt',
+        df_features_sap, df_targets_sap, _, _, df_change_sap = load_data(file_path='./data/sap.us.txt',
                                                           use_preloaded=USE_PRELOADED,
                                                           minimum=minimum,
                                                           maximum=maximum)
-        df_features_orcl, df_targets_orcl, _, _ = load_data(file_path='./data/orcl.us.txt',
+        df_features_orcl, df_targets_orcl, _, _, df_change_orcl = load_data(file_path='./data/orcl.us.txt',
                                                             use_preloaded=USE_PRELOADED,
                                                             minimum=minimum,
                                                             maximum=maximum)
-        df_features_msft, df_targets_msft, _, _ = load_data(file_path='./data/msft.us.txt',
+        df_features_msft, df_targets_msft, _, _, df_change_msft = load_data(file_path='./data/msft.us.txt',
                                                             use_preloaded=USE_PRELOADED,
                                                             minimum=minimum,
                                                             maximum=maximum)
-        df_features_acn, df_targets_acn, _, _ = load_data(file_path='./data/acn.us.txt',
+        df_features_acn, df_targets_acn, _, _, df_change_acn = load_data(file_path='./data/acn.us.txt',
                                                           use_preloaded=USE_PRELOADED,
                                                           minimum=minimum,
                                                           maximum=maximum)
@@ -79,19 +79,25 @@ def main():
         PairsDataTest = {}
         StockDataTrain = {}
         StockDataTest = {}
+        PairsPearson = {}
         for pair in combinations(stocks,2):
-            if calc_correlaction(pair) >= THRESHOLD:
-                if USE_PRELOADED:
-                    df1_features = eval(f"df_features_{pair[0]}")
-                    df1_targets = eval(f"df_targets_{pair[0]}")
-                    df2_features = eval(f"df_features_{pair[1]}")
-                    df2_targets = eval(f"df_targets_{pair[1]}")
-                else:
-                    df1_features = eval(f"df_features_{pair[0]}").to_numpy()
-                    df1_targets = eval(f"df_targets_{pair[0]}").to_numpy()
-                    df2_features = eval(f"df_features_{pair[1]}").to_numpy()
-                    df2_targets = eval(f"df_targets_{pair[1]}").to_numpy()
-
+            if USE_PRELOADED:
+                df1_features = eval(f"df_features_{pair[0]}")
+                df1_targets = eval(f"df_targets_{pair[0]}")
+                df2_features = eval(f"df_features_{pair[1]}")
+                df2_targets = eval(f"df_targets_{pair[1]}")
+                df1_change = eval(f"df_change_{pair[0]}")
+                df2_change = eval(f"df_change_{pair[1]}")
+            else:
+                df1_features = eval(f"df_features_{pair[0]}").to_numpy()
+                df1_targets = eval(f"df_targets_{pair[0]}").to_numpy()
+                df2_features = eval(f"df_features_{pair[1]}").to_numpy()
+                df2_targets = eval(f"df_targets_{pair[1]}").to_numpy()
+                df1_change = eval(f"df_change_{pair[0]}").to_numpy()
+                df2_change = eval(f"df_change_{pair[1]}").to_numpy()
+            pearson = calc_correlaction(df1_change, df2_change, pair)
+            PairsPearson[pair] = pearson
+            if pearson >= THRESHOLD:
                 df1_features_train, df1_features_test, df1_targets_train,\
                 df1_targets_test = train_test_split(df1_features,
                                                     df1_targets,
