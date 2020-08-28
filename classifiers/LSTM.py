@@ -13,6 +13,13 @@ import matplotlib.pyplot as plt
 
 class LSTM(nn.Module):
     def __init__(self, input_dim, hidden_dim, num_layers, output_dim):
+        """
+        TODO
+        :param input_dim:
+        :param hidden_dim:
+        :param num_layers:
+        :param output_dim:
+        """
         super(LSTM, self).__init__()
         # Hidden dimensions
         self.hidden_dim = hidden_dim
@@ -35,6 +42,12 @@ class LSTM(nn.Module):
 
 
 def LSTM_phase(week_features, week_targets):
+    """
+    TODO
+    :param week_features:
+    :param week_targets:
+    :return:
+    """
     logger = logging.getLogger(__name__)
     logger.info("---------- LSTM Phase -----------")
     logger.info(f"batch size:{batch_size}, "

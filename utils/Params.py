@@ -13,20 +13,20 @@ PERCEPTRON_TRAIN = True
 
 ########## Perceptron CRF ##########
 STRUCT_PERCEPTRON_TRAIN = True
-STRUCT_PERCEPTRON_AVG = 10
-STRUCT_PERCEPTRON_MAXITER = 200
+STRUCT_PERCEPTRON_AVG = 100
+STRUCT_PERCEPTRON_MAXITER = 2000
 
 ########## LSTM ##########
 LSTM_TRAIN = True
 hidden_dim = 120
 num_layers = 2
-num_epochs = 2
+num_epochs = 200
 batch_size = 16
 input_dim = len(FEATURES)  # do not change
 output_dim = 1  # do not change
 
 ######## MLP #######
-MLP_MAXITER = 2
+MLP_MAXITER = 10000
 
 ###### MRF #####
 THRESHOLD = 0.5

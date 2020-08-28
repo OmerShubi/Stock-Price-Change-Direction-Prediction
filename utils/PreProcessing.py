@@ -8,6 +8,12 @@ import logging.config
 
 
 def preprocess_to_day(input_df, minimum):
+    """
+    TODO
+    :param input_df:
+    :param minimum:
+    :return:
+    """
     logger = logging.getLogger(__name__)
 
     df = input_df.copy()
@@ -31,6 +37,11 @@ def preprocess_to_day(input_df, minimum):
 
 
 def preprocess_to_week(input_df):
+    """
+    TODO
+    :param input_df:
+    :return:
+    """
     df = input_df.copy()
     # add day of week
     df['weekDay'] = df.Date.dt.weekday
@@ -81,6 +92,14 @@ def preprocess_to_week(input_df):
 
 
 def load_data(file_path, minimum="", maximum="", use_preloaded=False):
+    """
+    TODO
+    :param file_path:
+    :param minimum:
+    :param maximum:
+    :param use_preloaded:
+    :return:
+    """
     logger = logging.getLogger(__name__)
 
     company = file_path.split("/")[2].split(".")[0]
@@ -105,13 +124,21 @@ def load_data(file_path, minimum="", maximum="", use_preloaded=False):
 
 
 def create_data(file_path, company, minimum=None, maximum=None):
+    """
+    TODO
+    :param file_path:
+    :param company:
+    :param minimum:
+    :param maximum:
+    :return:
+    """
     logger = logging.getLogger(__name__)
 
     df = pd.read_csv(file_path, parse_dates=['Date'], index_col=['index'])
     df_day = preprocess_to_day(df, minimum)
 
-    # plot_time_price(df_day)
-    # plot_time_volume(df_day)
+    plot_time_price(df_day, title='IBM Stock Price, 1960 - 2020')
+    plot_time_volume(df_day, title='IBM Stock Volume, 1960 - 2020')
 
     scaler = MinMaxScaler()
     df_day[FEATURES] = scaler.fit_transform(df_day[FEATURES])

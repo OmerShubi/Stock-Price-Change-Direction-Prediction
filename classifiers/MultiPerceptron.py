@@ -4,6 +4,15 @@ import logging.config
 
 
 def multi_perceptron_phase(X_train, X_test, y_train, y_test, pair):
+    """
+    TODO
+    :param X_train:
+    :param X_test:
+    :param y_train:
+    :param y_test:
+    :param pair:
+    :return:
+    """
     logger = logging.getLogger(__name__)
 
     model = MLPClassifier(random_state=0, n_iter_no_change=100, learning_rate='adaptive', max_iter=MLP_MAXITER)

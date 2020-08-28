@@ -4,6 +4,14 @@ from utils.Params import FEATURES
 import logging.config
 
 def batch_infer(PairsData, StockData, num_days, set_name):
+    """
+    TODO
+    :param PairsData:
+    :param StockData:
+    :param num_days:
+    :param set_name:
+    :return:
+    """
     logger = logging.getLogger(__name__)
 
     logger.info(f"--------- BP for {set_name} Phase ---------")
@@ -46,6 +54,13 @@ def batch_infer(PairsData, StockData, num_days, set_name):
 
 
 def infer(nodes_features, edges, edge_features):
+    """
+    TODO
+    :param nodes_features:
+    :param edges:
+    :param edge_features:
+    :return:
+    """
     # simple example
     # nodes_features = np.array([[4], [1]])
     # Y = np.array([1, 0])

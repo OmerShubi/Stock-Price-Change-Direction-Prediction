@@ -15,6 +15,10 @@ import logging.config
 
 
 def main():
+    """
+    TODO
+    :return:
+    """
     # Gets or creates a logger
     logging.config.fileConfig('logging.conf')
     logger = logging.getLogger(__name__)
@@ -48,13 +52,14 @@ def main():
         logger.info('--------- Part 1 Finish ---------')
 
     if PART2:
-        # correlation train between all two stock_names
-        # train perceptron for all two corrleated stock_names:
-        # example : [features-ibm, features-crm, label] , label - [(0,0),(0,1),(1,0),(1,1)]
-        # inference by perceptron o test -> potentail matrix
-        # graph for test
-        # BP
-
+        """
+            correlation train between all two stock_names
+            train perceptron for all two corrleated stock_names:
+            example : [features-ibm, features-crm, label] , label - [(0,0),(0,1),(1,0),(1,1)]
+            inference by perceptron o test -> potentail matrix
+            graph for test
+            BP
+        """
         logger.info('--------- Part 2 Start ---------')
         stock_names = ['ibm', 'orcl', 'sap', 'csco', 'intc']
         logger.info(f'stocks: {stock_names}, Threshold:{THRESHOLD}')
@@ -80,6 +85,7 @@ def main():
         logger.info(f"--------- MultiPerceptron Phase  ---------")
         logger.info(f"Max Iter:{MLP_MAXITER}")
 
+        # Compute Pairwise Correlations, train MLP for pairs of companies above threshold
         for pair in combinations(zip(stock_names, stocks), 2):
             stock1, stock2 = pair
             stock1_name, stock1_data = stock1

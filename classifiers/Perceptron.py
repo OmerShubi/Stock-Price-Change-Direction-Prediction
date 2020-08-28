@@ -1,12 +1,18 @@
+import logging.config
+
 from sklearn.linear_model import Perceptron
 from sklearn.model_selection import train_test_split
 
 from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST
-from utils.Params import FEATURES
-import logging.config
 
 
 def perceptron_phase(X, y):
+    """
+    TODO
+    :param X:
+    :param y:
+    :return:
+    """
     logger = logging.getLogger(__name__)
 
     logger.info("--------- Perceptron Phase ---------")

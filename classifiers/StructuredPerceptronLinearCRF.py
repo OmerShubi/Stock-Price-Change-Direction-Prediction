@@ -8,6 +8,12 @@ from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST, STRUCT_PERCEPTRON_AVG, S
 
 
 def PerceptronCRF(week_features, week_targets):
+    """
+    TODO
+    :param week_features:
+    :param week_targets:
+    :return:
+    """
     logger = logging.getLogger(__name__)
 
     logger.info("------------- Structured Perceptron Phase -------------")
