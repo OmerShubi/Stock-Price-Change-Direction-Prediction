@@ -92,9 +92,6 @@ def find_dates(stock_names):
 
     return minimum, maximum
 
-
-
-
 # stock1 =stocks[0][0]
 # stock2 =stocks[2][0]
 # common = stock1.merge(stock2, on=["Date"])

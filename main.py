@@ -3,7 +3,7 @@ from classifiers.StructuredPerceptronLinearCRF import PerceptronCRF
 from classifiers.Perceptron import perceptron_phase
 from classifiers.MultiPerceptron import multi_perceptron_phase
 from utils.Params import USE_PRELOADED, PERCEPTRON_TRAIN, STRUCT_PERCEPTRON_TRAIN, \
-    LSTM_TRAIN, PART1, PART2, THRESHOLD, FEATURES, MLP_MAXITER
+    LSTM_TRAIN, PART1, PART2, THRESHOLD, FEATURES, MLP_MAXITER, STOCK_NAMES
 from utils.PreProcessing import load_data
 from utils.Utils import calc_correlation, find_dates
 from itertools import combinations
@@ -16,8 +16,10 @@ import logging.config
 
 def main():
     """
-    TODO
-    :return:
+    Demonstrates the use of different models
+    and algorithms to predict the direction of change of stock price.
+
+    For more info read the README.md
     """
     # Gets or creates a logger
     logging.config.fileConfig('logging.conf')
@@ -53,23 +55,28 @@ def main():
 
     if PART2:
         """
-            correlation train between all two stock_names
-            train perceptron for all two corrleated stock_names:
+            correlation train between all two STOCK_NAMES
+            train perceptron for all two corrleated STOCK_NAMES:
             example : [features-ibm, features-crm, label] , label - [(0,0),(0,1),(1,0),(1,1)]
-            inference by perceptron o test -> potentail matrix
+                Features are a concatenation of features of both companies
+                Categorical Labels are:
+                    0 if both companies have direction down
+                    1 if company 1 has up direction and company 2 has down direction  
+                    2 if company 1 has down direction and company 2 has up direction  
+                    3 if both companies have direction up
+            inference by perceptron on test -> potentail matrix
             graph for test
             BP
         """
         logger.info('--------- Part 2 Start ---------')
-        stock_names = ['ibm', 'orcl', 'sap', 'csco', 'intc']
-        logger.info(f'stocks: {stock_names}, Threshold:{THRESHOLD}')
+        logger.info(f'stocks: {STOCK_NAMES}, Threshold:{THRESHOLD}')
         removed_stocks = ['acn', 'crm']
-        minimum, maximum = find_dates(stock_names)
+        minimum, maximum = find_dates(STOCK_NAMES)
         logger.info(f'Date range: {minimum}-{maximum}')
 
         # create/load data
         stocks = []
-        for stock_name in stock_names:
+        for stock_name in STOCK_NAMES:
             array_features, array_targets, _, _, array_change = load_data(file_path=f'./data/{stock_name}.us.txt',
                                                                           use_preloaded=USE_PRELOADED,
                                                                           minimum=minimum,
@@ -86,7 +93,7 @@ def main():
         logger.info(f"Max Iter:{MLP_MAXITER}")
 
         # Compute Pairwise Correlations, train MLP for pairs of companies above threshold
-        for pair in combinations(zip(stock_names, stocks), 2):
+        for pair in combinations(zip(STOCK_NAMES, stocks), 2):
             stock1, stock2 = pair
             stock1_name, stock1_data = stock1
             stock2_name, stock2_data = stock2

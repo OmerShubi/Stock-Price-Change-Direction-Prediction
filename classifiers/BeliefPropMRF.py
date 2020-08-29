@@ -3,14 +3,16 @@ from pystruct.models import EdgeFeatureGraphCRF
 from utils.Params import FEATURES
 import logging.config
 
+
 def batch_infer(PairsData, StockData, num_days, set_name):
     """
-    TODO
-    :param PairsData:
-    :param StockData:
-    :param num_days:
-    :param set_name:
-    :return:
+    Performs inference for all companies for all given days by calling _infer function
+
+    :param PairsData: for each company pair, predicted probability for each of the four options (labels),
+        for each day in set (ndarray, predictions)
+    :param StockData: for each company, both the daily features and label
+    :param num_days: int, number of days for inference
+    :param set_name: string, 'train'/'test' for logging
     """
     logger = logging.getLogger(__name__)
 
@@ -22,7 +24,7 @@ def batch_infer(PairsData, StockData, num_days, set_name):
     Y_batch = np.zeros((num_days, num_stocks))
     for stock, values in StockData.items():
         # values = (X, y)
-        X_batch[:,stock_to_inx[stock]] = values[0]
+        X_batch[:, stock_to_inx[stock]] = values[0]
         Y_batch[:, stock_to_inx[stock]] = values[1].flatten()
 
     edges = []
@@ -30,15 +32,15 @@ def batch_infer(PairsData, StockData, num_days, set_name):
     for inx, pair_values in enumerate(PairsData.items()):
         pair, values = pair_values
         edges.append([stock_to_inx[pair[0]], stock_to_inx[pair[1]]])
-        pair_to_inx[(pair[0], pair[1])] = 2*inx
+        pair_to_inx[(pair[0], pair[1])] = 2 * inx
         edges.append([stock_to_inx[pair[1]], stock_to_inx[pair[0]]])
-        pair_to_inx[(pair[1], pair[0])] = 2*inx + 1
+        pair_to_inx[(pair[1], pair[0])] = 2 * inx + 1
     edges = np.array(edges)
 
     edge_features = np.zeros((num_days, edges.shape[0], num_features))
     for pair, values in PairsData.items():
         # [(0,0), (0,1), (1,0), (1,1)] , [source -> des] : [(Y_source, Y_dest)]
-        edge_features[:,pair_to_inx[(pair[0], pair[1])]] = values
+        edge_features[:, pair_to_inx[(pair[0], pair[1])]] = values
         values_inv = values.copy()
         values_inv[2] = values[1]
         values_inv[1] = values[2]
@@ -46,20 +48,20 @@ def batch_infer(PairsData, StockData, num_days, set_name):
 
     prediction_list = []
     for x, features in zip(X_batch, edge_features):
-        prediction_list.append(infer(x, edges, features))
+        prediction_list.append(_infer(x, edges, features))
     prediction_array = np.array(prediction_list)
     for stock, inx in stock_to_inx.items():
-        accuracy = (Y_batch[:,inx]==prediction_array[:,inx]).sum() / num_days
-        logger.info(f"BeliefProp accuracy {set_name} for {stock} : {round(accuracy,3)}")
+        accuracy = (Y_batch[:, inx] == prediction_array[:, inx]).sum() / num_days
+        logger.info(f"BeliefProp accuracy {set_name} for {stock} : {round(accuracy, 3)}")
 
 
-def infer(nodes_features, edges, edge_features):
+def _infer(nodes_features, edges, edge_features):
     """
-    TODO
-    :param nodes_features:
-    :param edges:
-    :param edge_features:
-    :return:
+    given the graph node features (companies and their daily features),
+     edges (for related companies) and edge_features (weights of connections)
+    predicts the direction of stock price change for each of the companies
+
+    :return: prediction for each of the companies
     """
     # simple example
     # nodes_features = np.array([[4], [1]])

@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 import logging.config
 
 from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST, batch_size, input_dim, hidden_dim, output_dim, num_layers, \
-    num_epochs, FEATURES
+    num_epochs
 
 import matplotlib.pyplot as plt
 
@@ -14,11 +14,12 @@ import matplotlib.pyplot as plt
 class LSTM(nn.Module):
     def __init__(self, input_dim, hidden_dim, num_layers, output_dim):
         """
-        TODO
-        :param input_dim:
-        :param hidden_dim:
-        :param num_layers:
-        :param output_dim:
+        LSTM Neural network , inherits from pytorch nn.Module and a fully connected Linear layer afterwards
+
+        :param input_dim: int, LSTM input dimension - should be equal to number of features used.
+        :param hidden_dim: int, size of Hidden dimensions
+        :param num_layers: int, Number of hidden layers
+        :param output_dim: int, the final output dimension, should be 1
         """
         super(LSTM, self).__init__()
         # Hidden dimensions
@@ -43,10 +44,10 @@ class LSTM(nn.Module):
 
 def LSTM_phase(week_features, week_targets):
     """
-    TODO
-    :param week_features:
-    :param week_targets:
-    :return:
+    Trains an LSTM NN on a training set and computes the accuracy on both the training and a validation set
+
+    :param week_features: ndarray, 3d-array of week, day of week, day features
+    :param week_targets: ndarray, 2d-array of week, direction of each day
     """
     logger = logging.getLogger(__name__)
     logger.info("---------- LSTM Phase -----------")

@@ -1,6 +1,7 @@
 ########## ALL ##########
 TEST_SIZE = 0.2
-PART1 = False
+STOCK_NAMES = ['ibm', 'orcl', 'sap', 'csco', 'intc']
+PART1 = True
 PART2 = True
 
 ## IF CHANGE FEATURES USE PRELOADE FALSE ONE TIME
