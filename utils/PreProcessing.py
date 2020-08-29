@@ -115,11 +115,12 @@ def _preprocess_to_day(input_df, compute_statistics):
     df.loc[df.Close < df.Open, 'direction'] = 0
     df['Change'] = df.Close - df.Open
     df.drop(["Close"], axis=1, inplace=True)
+    df['Low_mid'] = df['Low']+0.5*(df['Open'] - df['Low'])
+    df['High_mid'] = df['High'] - 0.5*(df['High'] - df['Open'])
     # check days range data
     if not compute_statistics:
         logger.info(f'Date range: {min(df.Date)}-{max(df.Date)}')
         logger.info(f'Num of days:{len(df)}')
-
     return df
 
 
