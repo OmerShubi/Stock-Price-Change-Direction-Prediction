@@ -22,6 +22,8 @@ class LSTM(nn.Module):
         :param output_dim: int, the final output dimension, should be 1
         """
         super(LSTM, self).__init__()
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
         # Hidden dimensions
         self.hidden_dim = hidden_dim
 
@@ -37,7 +39,7 @@ class LSTM(nn.Module):
         self.fc = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
-        out, _ = self.lstm(x)
+        out, _ = self.lstm(x.to(self.device))
         out = self.fc(out)
         return out
 
@@ -73,6 +75,13 @@ def LSTM_phase(week_features, week_targets):
 
     model = LSTM(input_dim=input_dim, hidden_dim=hidden_dim, output_dim=output_dim, num_layers=num_layers)
 
+    use_cuda = torch.cuda.is_available()
+    device = torch.device("cuda:0" if use_cuda else "cpu")
+    logger.debug(device)
+    if use_cuda:
+        logger.debug("using cuda")
+        model.cuda()
+
     loss_fn = torch.nn.BCEWithLogitsLoss()
 
     optimizer = torch.optim.Adam(model.parameters())
@@ -90,8 +99,8 @@ def LSTM_phase(week_features, week_targets):
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs = model(inputs)
-            loss = loss_fn(outputs.flatten(), labels.flatten())
+            outputs = model(inputs.to(device))
+            loss = loss_fn(outputs.flatten().to(device), labels.flatten().to(device))
             loss.backward()
             optimizer.step()
             loss_inner_list.append(loss.item())
@@ -100,8 +109,8 @@ def LSTM_phase(week_features, week_targets):
 
         with torch.no_grad():
             model.eval()
-            y_train_pred = model(X_train)
-            y_test_pred = model(X_test)
+            y_train_pred = model(X_train).cpu()
+            y_test_pred = model(X_test).cpu()
             model.train()
 
             y_pred_train = np.round(torch.sigmoid(y_train_pred.detach().squeeze()))
