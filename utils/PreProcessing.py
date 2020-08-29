@@ -62,11 +62,11 @@ def _create_data(file_path, company, minimum=None, maximum=None):
     df = pd.read_csv(file_path, parse_dates=['Date'], index_col=['index'])
     df_day = _preprocess_to_day(df, minimum)
 
-    plot_time_price(df_day, title='IBM Stock Price, 1960 - 2020')
-    plot_time_volume(df_day, title='IBM Stock Volume, 1960 - 2020')
+    # plot_time_price(df_day, title='IBM Stock Price, 1960 - 2020')
+    # plot_time_volume(df_day, title='IBM Stock Volume, 1960 - 2020')
 
     scaler = MinMaxScaler()
-    df_day[FEATURES] = scaler.fit_transform(df_day[FEATURES])
+    df_day[FEATURES+['Change']] = scaler.fit_transform(df_day[FEATURES+['Change']])
 
     week_features, week_targets = _preprocess_to_week(df_day)
     np.save(f'./data/{company}_week_features_{minimum}_{maximum}.npy', week_features)
