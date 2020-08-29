@@ -8,6 +8,13 @@ from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST, STRUCT_PERCEPTRON_AVG, S
 
 
 def PerceptronCRF(week_features, week_targets):
+    """
+    Trains a perceptron based on a chain CRF
+     on a training set and computes the accuracy on both the training and a validation set
+
+    :param week_features: ndarray, 3d-array of week, day of week, day features
+    :param week_targets: ndarray, 2d-array of week, direction of each day
+    """
     logger = logging.getLogger(__name__)
 
     logger.info("------------- Structured Perceptron Phase -------------")
