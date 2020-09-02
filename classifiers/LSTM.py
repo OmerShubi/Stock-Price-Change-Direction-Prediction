@@ -8,6 +8,7 @@ import logging.config
 from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST, batch_size, input_dim, hidden_dim, output_dim, num_layers, \
     num_epochs
 
+torch.manual_seed(0)
 import matplotlib.pyplot as plt
 
 
