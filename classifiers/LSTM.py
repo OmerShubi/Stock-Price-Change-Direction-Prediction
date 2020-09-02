@@ -1,12 +1,13 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 import logging.config
 
 from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST, batch_size, input_dim, hidden_dim, output_dim, num_layers, \
     num_epochs
+from utils.Utils import compute_prediction_report
 
 torch.manual_seed(0)
 import matplotlib.pyplot as plt
@@ -45,7 +46,7 @@ class LSTM(nn.Module):
         return out
 
 
-def LSTM_phase(week_features, week_targets):
+def LSTM_phase(week_features, week_targets, week_targets2=None):
     """
     Trains an LSTM NN on a training set and computes the accuracy on both the training and a validation set
 
@@ -57,13 +58,17 @@ def LSTM_phase(week_features, week_targets):
     logger.info(f"batch size:{batch_size}, "
                 f"input_dim:{input_dim}, hidden_dim:{hidden_dim}, output_dim:{output_dim},"
                 f" num_layers:{num_layers}, num_epochs:{num_epochs}")
+    is_part3 = week_targets2 is not None
 
-    X_train, X_test, y_train, y_test = train_test_split(week_features,
-                                                        week_targets,
-                                                        test_size=TEST_SIZE,
-                                                        random_state=42,
-                                                        shuffle=SHUFFLE_TRAIN_TEST)
+    if week_targets2 is None:
+        week_targets2 = week_targets
 
+    X_train, X_test, y_train, y_test, y2_train, y2_test = train_test_split(week_features,
+                                                                           week_targets,
+                                                                           week_targets2,
+                                                                           test_size=TEST_SIZE,
+                                                                           random_state=42,
+                                                                           shuffle=SHUFFLE_TRAIN_TEST)
     # make training and test sets in torch
     X_train = torch.from_numpy(X_train).type(torch.Tensor)
     X_test = torch.from_numpy(X_test).type(torch.Tensor)
@@ -110,12 +115,12 @@ def LSTM_phase(week_features, week_targets):
 
         with torch.no_grad():
             model.eval()
-            y_train_pred = model(X_train).cpu()
-            y_test_pred = model(X_test).cpu()
+            y_train_pred_prob = model(X_train).cpu()
+            y_test_pred_prob = model(X_test).cpu()
             model.train()
 
-            y_pred_train = np.round(torch.sigmoid(y_train_pred.detach().squeeze()))
-            y_pred_test = np.round(torch.sigmoid(y_test_pred.detach().squeeze()))
+            y_pred_train = np.round(torch.sigmoid(y_train_pred_prob.detach().squeeze()))
+            y_pred_test = np.round(torch.sigmoid(y_test_pred_prob.detach().squeeze()))
 
             train_acc = accuracy_score(y_train.squeeze().flatten(), y_pred_train.flatten())
             test_acc = accuracy_score(y_test.squeeze().flatten(), y_pred_test.flatten())
@@ -123,9 +128,12 @@ def LSTM_phase(week_features, week_targets):
             test_acc_list.append(test_acc)
 
         if epoch % 10 == 0 or epoch == num_epochs - 1:
-            logger.info(f'epoch={epoch}, train_acc={round(train_acc, 3)}, '
+            logger.info(f'epoch={epoch}, train_acc={round(train_acc, 9)}, '
                         f'test_acc={round(test_acc, 3)}, '
-                        f'epoch_mean_loss={round(epoch_mean_loss, 3)}')
+                        f'epoch_mean_loss={round(epoch_mean_loss, 9)}')
+            if is_part3:
+                compute_prediction_report(y_pred_train.flatten(), y2_train.flatten(), y_train.flatten())
+                compute_prediction_report(y_pred_test.flatten(), y2_test.flatten(), y_test.flatten())
 
     # plt.plot(loss_list)
     # plt.show()

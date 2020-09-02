@@ -3,7 +3,7 @@ from classifiers.StructuredPerceptronLinearCRF import PerceptronCRF
 from classifiers.Perceptron import perceptron_phase
 from classifiers.MultiPerceptron import multi_perceptron_phase
 from utils.Params import USE_PRELOADED, PERCEPTRON_TRAIN, STRUCT_PERCEPTRON_TRAIN, \
-    LSTM_TRAIN, PART1, PART2, THRESHOLD, FEATURES, MLP_MAXITER, STOCK_NAMES
+    LSTM_TRAIN, PART1, PART2, THRESHOLD, FEATURES, MLP_MAXITER, STOCK_NAMES, PART3
 from utils.PreProcessing import load_data
 from utils.Utils import calc_correlation, find_dates
 from itertools import combinations
@@ -33,8 +33,9 @@ def main():
         # PART 1
 
         # create/load data
-        day_features, day_targets, week_features, week_targets, array_change = load_data(file_path='./data/ibm.us.txt',
-                                                                                         use_preloaded=USE_PRELOADED)
+        day_features, day_targets, week_features, \
+            week_targets, array_change, day_targets2, week_targets2 = load_data(file_path='./data/ibm.us.txt',
+                                                                                use_preloaded=USE_PRELOADED)
 
         # Plot Number of Upward / Downward days,
         # plot_direction_count(df_day)
@@ -77,7 +78,7 @@ def main():
         # create/load data
         stocks = []
         for stock_name in STOCK_NAMES:
-            array_features, array_targets, _, _, array_change = load_data(file_path=f'./data/{stock_name}.us.txt',
+            array_features, array_targets, _, _, array_change, _, _ = load_data(file_path=f'./data/{stock_name}.us.txt',
                                                                           use_preloaded=USE_PRELOADED,
                                                                           minimum=minimum,
                                                                           maximum=maximum)
@@ -147,7 +148,28 @@ def main():
         batch_infer(PairsDataTest, StockDataTest, num_days_test, 'test')
 
         logger.info('--------- Part 2 Finished ---------')
-    if not PART1 and not PART2:
+
+    if PART3:
+        logger.info('--------- Part 3 Start ---------')
+
+        # create/load data
+        day_features, day_targets, week_features, \
+            week_targets, array_change, day_targets2, week_targets2 = load_data(file_path='./data/ibm.us.txt',
+                                                                                use_preloaded=USE_PRELOADED)
+        if PERCEPTRON_TRAIN:
+            perceptron_phase(day_features, day_targets, day_targets2)
+
+        # PerceptronCRF
+        if STRUCT_PERCEPTRON_TRAIN:
+            PerceptronCRF(week_features, week_targets, week_targets2)
+
+        # LSTM
+        if LSTM_TRAIN:
+            LSTM_phase(week_features, week_targets, week_targets2)
+
+        logger.info('--------- Part 3 Finished ---------')
+
+    if not PART1 and not PART2 and not PART3:
         logger.info('No parts :(')
 
 

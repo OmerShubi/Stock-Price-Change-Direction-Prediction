@@ -3,6 +3,7 @@ TEST_SIZE = 0.2
 STOCK_NAMES = ['ibm', 'orcl', 'sap', 'csco', 'intc']
 PART1 = True
 PART2 = True
+PART3 = False
 
 ## IF CHANGE FEATURES USE PRELOADE FALSE ONE TIME
 FEATURES = ['Open', 'High', 'Low', 'Volume']
@@ -31,3 +32,8 @@ MLP_MAXITER = 10000
 
 ###### MRF #####
 THRESHOLD = 0.5
+
+
+######
+LOWER_THRESHOLD = -0.02
+UPPER_THRESHOLD = 0.02

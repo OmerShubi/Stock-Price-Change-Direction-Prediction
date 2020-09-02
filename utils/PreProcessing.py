@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from utils.Params import FEATURES
+from utils.Params import FEATURES, LOWER_THRESHOLD, UPPER_THRESHOLD
 from sklearn.preprocessing import MinMaxScaler
 from utils.Utils import plot_time_price, plot_time_volume, plot_direction_count
 import logging.config
@@ -15,7 +15,7 @@ def load_data(file_path, minimum="", maximum="", use_preloaded=False):
     :param minimum: timestamp, keeps only dates after this day (for part 2)
     :param maximum: timestamp, keeps only dates before this day (for part 2)
     :param use_preloaded: bool, if False creates the data even if it exists.
-    :return: day_features, day_target, week_features, week_targets, df_change -
+    :return: day_features, day_target, week_features, week_targets, arr_change -
     ndarrays of the features and targets for both parts
     """
     logger = logging.getLogger(__name__)
@@ -25,12 +25,14 @@ def load_data(file_path, minimum="", maximum="", use_preloaded=False):
         try:
             day_features = np.load(f'./data/{company}_day_features_{minimum}_{maximum}.npy')
             day_targets = np.load(f'./data/{company}_day_targets_{minimum}_{maximum}.npy')
+            day_targets2 = np.load(f'./data/{company}_day_targets2_{minimum}_{maximum}.npy')
             week_features = np.load(f'./data/{company}_week_features_{minimum}_{maximum}.npy')
             week_targets = np.load(f'./data/{company}_week_targets_{minimum}_{maximum}.npy')
-            df_change = np.load(f'./data/{company}_day_change_{minimum}_{maximum}.npy')
+            week_targets2 = np.load(f'./data/{company}_week_targets2_{minimum}_{maximum}.npy')
+            arr_change = np.load(f'./data/{company}_day_change_{minimum}_{maximum}.npy')
 
             logger.info(f'loading {company} data')
-            return day_features, day_targets, week_features, week_targets, df_change
+            return day_features, day_targets, week_features, week_targets, arr_change, day_targets2, week_targets2
 
         except FileNotFoundError as e:
             logger.info(e)
@@ -61,16 +63,19 @@ def _create_data(file_path, company, minimum=None, maximum=None):
 
     df = pd.read_csv(file_path, parse_dates=['Date'], index_col=['index'])
     df_day = _preprocess_to_day(df, minimum)
-
+    df_day.to_csv('df_day_2.csv')
     # plot_time_price(df_day, title='IBM Stock Price, 1960 - 2020')
     # plot_time_volume(df_day, title='IBM Stock Volume, 1960 - 2020')
 
     scaler = MinMaxScaler()
-    df_day[FEATURES+['Change']] = scaler.fit_transform(df_day[FEATURES+['Change']])
+    df_day[FEATURES + ['Change']] = scaler.fit_transform(df_day[FEATURES + ['Change']])
 
-    week_features, week_targets = _preprocess_to_week(df_day)
+    week_features, week_targets, week_targets2 = _preprocess_to_week(df_day)
+    logger.info(f'count of each direction2: {np.unique(week_targets2,return_counts=True)}')
+
     np.save(f'./data/{company}_week_features_{minimum}_{maximum}.npy', week_features)
     np.save(f'./data/{company}_week_targets_{minimum}_{maximum}.npy', week_targets)
+    np.save(f'./data/{company}_week_targets2_{minimum}_{maximum}.npy', week_targets2)
 
     if minimum:
         df_day = df_day[df_day['Date'].between(minimum, maximum)]
@@ -83,11 +88,13 @@ def _create_data(file_path, company, minimum=None, maximum=None):
     np.save(f'./data/{company}_day_change_{minimum}_{maximum}.npy', df_change)
 
     day_features = df_day[FEATURES].to_numpy()
-    day_target = df_day['direction'].to_numpy()
+    day_targets = df_day['direction'].to_numpy()
+    day_targets2 = df_day['direction2'].to_numpy()
     np.save(f'./data/{company}_day_features_{minimum}_{maximum}.npy', day_features)
-    np.save(f'./data/{company}_day_targets_{minimum}_{maximum}.npy', day_target)
+    np.save(f'./data/{company}_day_targets_{minimum}_{maximum}.npy', day_targets)
+    np.save(f'./data/{company}_day_targets2_{minimum}_{maximum}.npy', day_targets2)
 
-    return day_features, day_target, week_features, week_targets, df_change
+    return day_features, day_targets, week_features, week_targets, df_change, day_targets2, week_targets2
 
 
 def _preprocess_to_day(input_df, compute_statistics):
@@ -113,10 +120,20 @@ def _preprocess_to_day(input_df, compute_statistics):
     # add direction column : 1 if Close price >= Open price else 0
     df.loc[df.Close >= df.Open, 'direction'] = 1
     df.loc[df.Close < df.Open, 'direction'] = 0
+
     df['Change'] = df.Close - df.Open
+
+    df['percent_change'] = df['Change'] / df['Open']
+
+    df.loc[df.percent_change < LOWER_THRESHOLD, 'direction2'] = 0
+    df.loc[df.percent_change.between(LOWER_THRESHOLD, 0), 'direction2'] = 1
+    df.loc[df.percent_change.between(0, UPPER_THRESHOLD), 'direction2'] = 2
+    df.loc[df.percent_change > UPPER_THRESHOLD, 'direction2'] = 3
+    # x < -.05 : 0, -.05<=x<0 : 1, 0<=x<=.5 : 2 , x> .5 : 3
+
     df.drop(["Close"], axis=1, inplace=True)
-    df['Low_mid'] = df['Low']+0.5*(df['Open'] - df['Low'])
-    df['High_mid'] = df['High'] - 0.5*(df['High'] - df['Open'])
+    df['Low_mid'] = df['Low'] + 0.5 * (df['Open'] - df['Low'])
+    df['High_mid'] = df['High'] - 0.5 * (df['High'] - df['Open'])
     # check days range data
     if not compute_statistics:
         logger.info(f'Date range: {min(df.Date)}-{max(df.Date)}')
@@ -168,18 +185,22 @@ def _preprocess_to_week(input_df):
             week_days_index += 1
 
     df.drop(["Date"], axis=1, inplace=True)
-    df = df[FEATURES + ['weekNum', 'direction']]
+    df = df[FEATURES + ['weekNum', 'direction', 'direction2']]
     num_of_weeks = max(df.weekNum)
     features = []
     targets = []
+    targets2 = []
     features_len = len(FEATURES)
     for week_num in range(int(num_of_weeks)):
         week_feature_list = []
         week_label_list = []
+        week_label_list2 = []
         week = df[df['weekNum'] == week_num]
         for _, day in week.iterrows():
             week_feature_list.append(day[0:features_len].to_numpy())
-            week_label_list.append(day[-1])
+            week_label_list.append(day[-2])
+            week_label_list2.append(day[-1])
         features.append(week_feature_list)
-        targets.append(week_label_list)  # TODO require grad?
-    return np.array(features), np.array(targets)
+        targets.append(week_label_list)
+        targets2.append(week_label_list2)
+    return np.array(features), np.array(targets), np.array(targets2)

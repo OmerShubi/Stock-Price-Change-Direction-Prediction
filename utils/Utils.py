@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import pearsonr
 import logging.config
+import numpy as np
+from sklearn.metrics import classification_report
 
 
 def plot_time_price(df_day, title):
@@ -57,6 +59,23 @@ def plot_direction_count(df_day):
     axs.set_xticklabels(labels=['Down', 'Up'])
 
     plt.show()
+
+
+def compute_prediction_report(y_pred, y2, y):
+    """
+    TODO
+    :param y_pred:
+    :param y2:
+    :param y:
+    :return:
+    """
+    print(classification_report(y, y_pred))
+    # True increase and predict increase / True small increase
+    dec2 = len(np.where((y_pred == y) & (y == 0) & (y2 == 0))[0]) / len(np.where((y == 0) & (y2 == 0))[0])
+    dec1 = len(np.where((y_pred == y) & (y == 0) & (y2 == 1))[0]) / len(np.where((y == 0) & (y2 == 1))[0])
+    inc1 = len(np.where((y_pred == y) & (y == 1) & (y2 == 2))[0]) / len(np.where((y == 1) & (y2 == 2))[0])
+    inc2 = len(np.where((y_pred == y) & (y == 1) & (y2 == 3))[0]) / len(np.where((y == 1) & (y2 == 3))[0])
+    print(f"Big Decrease:{dec2}, Small Decrease:{dec1}, Small Increase:{inc1}, Big Increase: {inc2}")
 
 
 def calc_correlation(arr1_change, arr2_change):
