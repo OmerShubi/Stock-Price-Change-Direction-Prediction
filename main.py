@@ -42,15 +42,15 @@ def main():
 
         # Perceptron
         if PERCEPTRON_TRAIN:
-            perceptron_phase(day_features, day_targets)
+            perceptron_phase(X=day_features, y=day_targets, y2=day_targets2)
 
         # PerceptronCRF
         if STRUCT_PERCEPTRON_TRAIN:
-            PerceptronCRF(week_features, week_targets)
+            PerceptronCRF(week_features, week_targets, week_targets2)
 
         # LSTM
         if LSTM_TRAIN:
-            LSTM_phase(week_features, week_targets)
+            LSTM_phase(week_features, week_targets, week_targets2)
 
         logger.info('--------- Part 1 Finish ---------')
 
@@ -157,15 +157,15 @@ def main():
             week_targets, array_change, day_targets2, week_targets2 = load_data(file_path='./data/ibm.us.txt',
                                                                                 use_preloaded=USE_PRELOADED)
         if PERCEPTRON_TRAIN:
-            perceptron_phase(day_features, day_targets, day_targets2)
+            perceptron_phase(X=day_features, y=day_targets2)
 
         # PerceptronCRF
         if STRUCT_PERCEPTRON_TRAIN:
-            PerceptronCRF(week_features, week_targets, week_targets2)
+            PerceptronCRF(week_features=week_features, week_targets=week_targets2)
 
         # LSTM
         if LSTM_TRAIN:
-            LSTM_phase(week_features, week_targets, week_targets2)
+            LSTM_phase(week_features=week_features, week_targets=week_targets2, is_multilabel=True)
 
         logger.info('--------- Part 3 Finished ---------')
 

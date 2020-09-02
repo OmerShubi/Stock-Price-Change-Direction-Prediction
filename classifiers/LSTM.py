@@ -5,8 +5,8 @@ from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 import logging.config
 
-from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST, batch_size, input_dim, hidden_dim, output_dim, num_layers, \
-    num_epochs
+from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST, batch_size, input_dim, hidden_dim, num_layers, \
+    num_epochs, output_dim_part1, output_dim_part3, WEIGHTS
 from utils.Utils import compute_prediction_report
 
 torch.manual_seed(0)
@@ -46,19 +46,21 @@ class LSTM(nn.Module):
         return out
 
 
-def LSTM_phase(week_features, week_targets, week_targets2=None):
+def LSTM_phase(week_features, week_targets, week_targets2=None, is_multilabel=False):
     """
     Trains an LSTM NN on a training set and computes the accuracy on both the training and a validation set
 
     :param week_features: ndarray, 3d-array of week, day of week, day features
     :param week_targets: ndarray, 2d-array of week, direction of each day
     """
+    output_dim = output_dim_part3 if is_multilabel else output_dim_part1
+
     logger = logging.getLogger(__name__)
     logger.info("---------- LSTM Phase -----------")
     logger.info(f"batch size:{batch_size}, "
                 f"input_dim:{input_dim}, hidden_dim:{hidden_dim}, output_dim:{output_dim},"
                 f" num_layers:{num_layers}, num_epochs:{num_epochs}")
-    is_part3 = week_targets2 is not None
+    is_part1 = week_targets2 is not None
 
     if week_targets2 is None:
         week_targets2 = week_targets
@@ -72,23 +74,20 @@ def LSTM_phase(week_features, week_targets, week_targets2=None):
     # make training and test sets in torch
     X_train = torch.from_numpy(X_train).type(torch.Tensor)
     X_test = torch.from_numpy(X_test).type(torch.Tensor)
-    y_train = torch.from_numpy(y_train).type(torch.Tensor)
+    y_train_torch = torch.from_numpy(y_train).type(torch.int64 if is_multilabel else torch.Tensor)
     y_test = torch.from_numpy(y_test).type(torch.Tensor)
 
-    train_loader = torch.utils.data.DataLoader(dataset=torch.utils.data.TensorDataset(X_train, y_train),
+    train_loader = torch.utils.data.DataLoader(dataset=torch.utils.data.TensorDataset(X_train, y_train_torch),
                                                batch_size=batch_size,
                                                shuffle=True)
-
     model = LSTM(input_dim=input_dim, hidden_dim=hidden_dim, output_dim=output_dim, num_layers=num_layers)
 
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda:0" if use_cuda else "cpu")
-    logger.debug(device)
     if use_cuda:
         logger.debug("using cuda")
         model.cuda()
-
-    loss_fn = torch.nn.BCEWithLogitsLoss()
+    loss_fn = torch.nn.CrossEntropyLoss(weight=torch.tensor(WEIGHTS).to(device)) if is_multilabel else torch.nn.BCEWithLogitsLoss()
 
     optimizer = torch.optim.Adam(model.parameters())
 
@@ -106,7 +105,10 @@ def LSTM_phase(week_features, week_targets, week_targets2=None):
 
             # forward + backward + optimize
             outputs = model(inputs.to(device))
-            loss = loss_fn(outputs.flatten().to(device), labels.flatten().to(device))
+            if is_multilabel:
+                loss = loss_fn(torch.reshape(input=outputs, shape=(-1, output_dim_part3)).to(device), labels.flatten().to(device))
+            else:
+                loss = loss_fn(outputs.flatten().to(device), labels.flatten().to(device))
             loss.backward()
             optimizer.step()
             loss_inner_list.append(loss.item())
@@ -119,8 +121,12 @@ def LSTM_phase(week_features, week_targets, week_targets2=None):
             y_test_pred_prob = model(X_test).cpu()
             model.train()
 
-            y_pred_train = np.round(torch.sigmoid(y_train_pred_prob.detach().squeeze()))
-            y_pred_test = np.round(torch.sigmoid(y_test_pred_prob.detach().squeeze()))
+            if is_multilabel:
+                y_pred_train = np.argmax(y_train_pred_prob, axis=2).detach()
+                y_pred_test = np.argmax(y_test_pred_prob, axis=2).detach()
+            else:
+                y_pred_train = np.round(torch.sigmoid(y_train_pred_prob.detach().squeeze()))
+                y_pred_test = np.round(torch.sigmoid(y_test_pred_prob.detach().squeeze()))
 
             train_acc = accuracy_score(y_train.squeeze().flatten(), y_pred_train.flatten())
             test_acc = accuracy_score(y_test.squeeze().flatten(), y_pred_test.flatten())
@@ -128,12 +134,11 @@ def LSTM_phase(week_features, week_targets, week_targets2=None):
             test_acc_list.append(test_acc)
 
         if epoch % 10 == 0 or epoch == num_epochs - 1:
-            logger.info(f'epoch={epoch}, train_acc={round(train_acc, 9)}, '
+            logger.info(f'epoch={epoch}, train_acc={round(train_acc, 3)}, '
                         f'test_acc={round(test_acc, 3)}, '
-                        f'epoch_mean_loss={round(epoch_mean_loss, 9)}')
-            if is_part3:
-                compute_prediction_report(y_pred_train.flatten(), y2_train.flatten(), y_train.flatten())
-                compute_prediction_report(y_pred_test.flatten(), y2_test.flatten(), y_test.flatten())
+                        f'epoch_mean_loss={round(epoch_mean_loss, 3)}')
+            compute_prediction_report(y_pred_train.flatten(), y2_train.flatten(), y_train.flatten(), is_part1)
+            compute_prediction_report(y_pred_test.flatten(), y2_test.flatten(), y_test.flatten(), is_part1)
 
     # plt.plot(loss_list)
     # plt.show()

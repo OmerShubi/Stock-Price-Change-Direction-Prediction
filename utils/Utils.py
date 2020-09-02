@@ -61,7 +61,7 @@ def plot_direction_count(df_day):
     plt.show()
 
 
-def compute_prediction_report(y_pred, y2, y):
+def compute_prediction_report(y_pred, y2, y, is_part1):
     """
     TODO
     :param y_pred:
@@ -69,13 +69,16 @@ def compute_prediction_report(y_pred, y2, y):
     :param y:
     :return:
     """
-    print(classification_report(y, y_pred))
-    # True increase and predict increase / True small increase
-    dec2 = len(np.where((y_pred == y) & (y == 0) & (y2 == 0))[0]) / len(np.where((y == 0) & (y2 == 0))[0])
-    dec1 = len(np.where((y_pred == y) & (y == 0) & (y2 == 1))[0]) / len(np.where((y == 0) & (y2 == 1))[0])
-    inc1 = len(np.where((y_pred == y) & (y == 1) & (y2 == 2))[0]) / len(np.where((y == 1) & (y2 == 2))[0])
-    inc2 = len(np.where((y_pred == y) & (y == 1) & (y2 == 3))[0]) / len(np.where((y == 1) & (y2 == 3))[0])
-    print(f"Big Decrease:{dec2}, Small Decrease:{dec1}, Small Increase:{inc1}, Big Increase: {inc2}")
+    logger = logging.getLogger(__name__)
+
+    logger.info(f"\n{classification_report(y, y_pred)}")
+    if is_part1:
+        # True increase and predict increase / True small increase
+        dec2 = len(np.where((y_pred == y) & (y == 0) & (y2 == 0))[0]) / len(np.where((y == 0) & (y2 == 0))[0])
+        dec1 = len(np.where((y_pred == y) & (y == 0) & (y2 == 1))[0]) / len(np.where((y == 0) & (y2 == 1))[0])
+        inc1 = len(np.where((y_pred == y) & (y == 1) & (y2 == 2))[0]) / len(np.where((y == 1) & (y2 == 2))[0])
+        inc2 = len(np.where((y_pred == y) & (y == 1) & (y2 == 3))[0]) / len(np.where((y == 1) & (y2 == 3))[0])
+        logger.info(f"Big Decrease:{dec2}, Small Decrease:{dec1}, Small Increase:{inc1}, Big Increase: {inc2}")
 
 
 def calc_correlation(arr1_change, arr2_change):

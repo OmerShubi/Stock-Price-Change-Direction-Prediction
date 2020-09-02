@@ -17,7 +17,7 @@ def perceptron_phase(X, y, y2=None):
     logger = logging.getLogger(__name__)
 
     logger.info("--------- Perceptron Phase ---------")
-    is_part3 = y2 is not None
+    is_part1 = y2 is not None
     if y2 is None:
         y2 = y.copy()
 
@@ -33,6 +33,5 @@ def perceptron_phase(X, y, y2=None):
     y_train_pred = clf.predict(X_train)
     y_test_pred = clf.predict(X_test)
 
-    if is_part3:
-        compute_prediction_report(y_train_pred, y2_train, y_train)
-        compute_prediction_report(y_test_pred, y2_test, y_test)
+    compute_prediction_report(y_train_pred, y2_train, y_train, is_part1)
+    compute_prediction_report(y_test_pred, y2_test, y_test, is_part1)
