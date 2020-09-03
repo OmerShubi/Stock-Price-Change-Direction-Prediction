@@ -71,14 +71,46 @@ def compute_prediction_report(y_pred, y2, y, is_part1):
     """
     logger = logging.getLogger(__name__)
 
-    logger.info(f"\n{classification_report(y, y_pred)}")
+    if isinstance(y, np.ndarray):
+        y_copy = y.copy()
+    else:
+        y_copy = y.detach().clone()
+
+    if isinstance(y_pred, np.ndarray):
+        y_pred_copy = y_pred.copy()
+    else:
+        y_pred_copy = y_pred.detach().clone()
+
+    if isinstance(y2, np.ndarray):
+        y2_copy = y2.copy()
+    else:
+        y2_copy = y2.detach().clone()
+
+    logger.info(f"As is: \n{classification_report(y_copy, y_pred_copy, digits=3)}")
     if is_part1:
         # True increase and predict increase / True small increase
-        dec2 = len(np.where((y_pred == y) & (y == 0) & (y2 == 0))[0]) / len(np.where((y == 0) & (y2 == 0))[0])
-        dec1 = len(np.where((y_pred == y) & (y == 0) & (y2 == 1))[0]) / len(np.where((y == 0) & (y2 == 1))[0])
-        inc1 = len(np.where((y_pred == y) & (y == 1) & (y2 == 2))[0]) / len(np.where((y == 1) & (y2 == 2))[0])
-        inc2 = len(np.where((y_pred == y) & (y == 1) & (y2 == 3))[0]) / len(np.where((y == 1) & (y2 == 3))[0])
-        logger.info(f"Big Decrease:{dec2}, Small Decrease:{dec1}, Small Increase:{inc1}, Big Increase: {inc2}")
+        dec2 = len(np.where((y_pred_copy == y_copy) & (y_copy == 0) & (y2_copy == 0))[0]) / len(np.where((y_copy == 0) & (y2_copy == 0))[0])
+        dec1 = len(np.where((y_pred_copy == y_copy) & (y_copy == 0) & (y2_copy == 1))[0]) / len(np.where((y_copy == 0) & (y2_copy == 1))[0])
+        inc1 = len(np.where((y_pred_copy == y_copy) & (y_copy == 1) & (y2_copy == 2))[0]) / len(np.where((y_copy == 1) & (y2_copy == 2))[0])
+        inc2 = len(np.where((y_pred_copy == y_copy) & (y_copy == 1) & (y2_copy == 3))[0]) / len(np.where((y_copy == 1) & (y2_copy == 3))[0])
+        logger.info(f"Big Decrease:{round(dec2,3)}, Small Decrease:{round(dec1,3)}, Small Increase:{round(inc1,3)}, Big Increase: {round(inc2,3)}")
+
+    else:
+        # Say dec (say big dec + small dec) and is really big dec out of big dec
+        dec2 = len(np.where(((y_pred_copy == 0) | (y_pred_copy == 1)) & (y_copy == 0))[0]) / len(np.where((y_copy == 0))[0])
+        dec1 = len(np.where(((y_pred_copy == 0) | (y_pred_copy == 1)) & (y_copy == 1))[0]) / len(np.where((y_copy == 1))[0])
+        inc1 = len(np.where(((y_pred_copy == 2) | (y_pred_copy == 3)) & (y_copy == 2))[0]) / len(np.where((y_copy == 2))[0])
+        inc2 = len(np.where(((y_pred_copy == 2) | (y_pred_copy == 3)) & (y_copy == 3))[0]) / len(np.where((y_copy == 3))[0])
+        logger.info(f"Big Decrease:{round(dec2,3)}, Small Decrease:{round(dec1,3)}, Small Increase:{round(inc1,3)}, Big Increase: {round(inc2,3)}")
+
+        for arr in [y_copy, y_pred_copy]:
+            arr[np.where(arr == 0)[0]] = 0
+            arr[np.where(arr == 1)[0]] = 0
+            arr[np.where(arr == 2)[0]] = 1
+            arr[np.where(arr == 3)[0]] = 1
+
+        logger.info(f"After Manipulation: \n{classification_report(y_copy, y_pred_copy, digits=3)}")
+        pass
 
 
 def calc_correlation(arr1_change, arr2_change):

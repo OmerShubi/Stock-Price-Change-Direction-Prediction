@@ -4,7 +4,8 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import logging.config
 import numpy as np
-from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST, STRUCT_PERCEPTRON_AVG, STRUCT_PERCEPTRON_MAXITER, FEATURES
+from utils.Params import TEST_SIZE, SHUFFLE_TRAIN_TEST, STRUCT_PERCEPTRON_AVG, STRUCT_PERCEPTRON_MAXITER, FEATURES, \
+    WEIGHTS
 from utils.Utils import compute_prediction_report
 
 
@@ -32,8 +33,11 @@ def PerceptronCRF(week_features, week_targets, week_targets2=None):
                                                                            test_size=TEST_SIZE,
                                                                            random_state=42,
                                                                            shuffle=SHUFFLE_TRAIN_TEST)
-
-    model = ChainCRF(directed=True)
+    if is_part1:
+        weights = None
+    else:
+        weights = [3, 1, 1, 3] # TODO
+    model = ChainCRF(directed=True, class_weight=weights)
     clf = StructuredPerceptron(model=model, average=STRUCT_PERCEPTRON_AVG, max_iter=STRUCT_PERCEPTRON_MAXITER)
     clf.fit(X=X_train, Y=y_train.astype(int))
     logger.info(f"Structured Perceptron Train Accuracy:{round(clf.score(X_train, y_train.astype(int)), 3)}")

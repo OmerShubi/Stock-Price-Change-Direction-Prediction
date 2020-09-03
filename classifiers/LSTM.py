@@ -133,7 +133,7 @@ def LSTM_phase(week_features, week_targets, week_targets2=None, is_multilabel=Fa
             train_acc_list.append(train_acc)
             test_acc_list.append(test_acc)
 
-        if epoch % 10 == 0 or epoch == num_epochs - 1:
+        if epoch % 100 == 0 or epoch == num_epochs - 1:
             logger.info(f'epoch={epoch}, train_acc={round(train_acc, 3)}, '
                         f'test_acc={round(test_acc, 3)}, '
                         f'epoch_mean_loss={round(epoch_mean_loss, 3)}')
